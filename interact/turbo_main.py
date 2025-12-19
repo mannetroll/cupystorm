@@ -274,7 +274,7 @@ COLOR_MAPS = {
     "RdBu": RDBU_LUT,
 }
 
-DEFAULT_CMAP_NAME = "Inferno"
+DEFAULT_CMAP_NAME = "Turbo"
 
 # ----------------------------------------------------------------------
 # Option A: Qt Indexed8 + palette tables (avoid expanding to RGB in NumPy)
@@ -405,7 +405,7 @@ class MainWindow(QMainWindow):
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
         self.re_combo.setToolTip("R: Reynolds Number (Re)")
-        self.re_combo.addItems(["1", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15"])
+        self.re_combo.addItems(["1", "100", "1000", "10000", "100000"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
 
         # K0 selector
@@ -425,20 +425,20 @@ class MainWindow(QMainWindow):
         # CFL selector
         self.cfl_combo = QComboBox()
         self.cfl_combo.setToolTip("L: Controlling Δt (CFL)")
-        self.cfl_combo.addItems(["0.05", "0.15", "0.25", "0.5", "0.75", "0.95"])
+        self.cfl_combo.addItems(["0.05", "0.15", "0.2", "0.25", "0.3", "0.5", "0.75", "0.95"])
         self.cfl_combo.setCurrentText(str(self.sim.cfl))
 
         # Steps selector
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
         self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "1E6"])
-        self.steps_combo.setCurrentText("5000")
+        self.steps_combo.setCurrentText("50000")
 
         # Update selector
         self.update_combo = QComboBox()
         self.update_combo.setToolTip("U: Update intervall")
         self.update_combo.addItems(["2", "5", "10", "20", "50", "100", "1000"])
-        self.update_combo.setCurrentText("5")
+        self.update_combo.setCurrentText("50")
 
         self.auto_reset_checkbox = QCheckBox()
         self.auto_reset_checkbox.setToolTip("If checked, simulation auto-resets")
@@ -493,7 +493,14 @@ class MainWindow(QMainWindow):
                 pass
 
         self.setWindowTitle(f"2D Turbulence {title_backend} © Mannetroll")
-        self.resize(self.sim.px + 40, self.sim.py + 120)
+        # --- FIX: size window from intended display size, not pixmap, and
+        #          don't halve height when we are upscaling (scale < 1).
+        disp_w, disp_h = self._display_size_px()
+        win_w = disp_w + 40
+        win_h = disp_h + 120
+        if self._display_scale() >= 1:
+            win_h //= 2
+        self.resize(win_w, win_h)
 
         # Keep-alive buffers for QImage wrappers
         self._last_pixels_rgb: Optional[np.ndarray] = None  # retained for compatibility
@@ -510,9 +517,45 @@ class MainWindow(QMainWindow):
         self._update_image(self.sim.get_frame_pixels())
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
 
+        self.on_steps_changed(self.steps_combo.currentText())
         self.on_start_clicked()  # auto-start simulation immediately
 
     # ------------------------------------------------------------------
+    def _display_scale(self) -> float:
+        """
+        Must match _maybe_downscale_u8() scale logic.
+        """
+        N = self.sim.N
+
+        if N <= 256:
+            return 0.5
+        if N < 768:
+            return 1.0
+        if N <= 1024:
+            return 2.0
+        if N <= 3072:
+            return 4.0
+        return 6.0
+
+    def _display_size_px(self) -> tuple[int, int]:
+        """
+        Compute displayed image size (w,h) in pixels after _maybe_downscale_u8().
+        Uses sim.px/sim.py (the raw frame pixel dimensions) and the same scale rules.
+        """
+        scale = self._display_scale()
+
+        w0 = int(self.sim.px)
+        h0 = int(self.sim.py)
+
+        if scale == 1.0:
+            return (w0, h0)
+
+        if scale < 1.0:
+            up = int(round(1.0 / scale))
+            return (w0 * up, h0 * up)
+
+        s = int(scale)
+        return (max(1, w0 // s), max(1, h0 // s))
 
     @staticmethod
     def move_widgets(src_layout, dst_layout):
@@ -567,12 +610,14 @@ class MainWindow(QMainWindow):
 
     def _maybe_downscale_u8(self, pix: np.ndarray) -> np.ndarray:
         """
-        Downscale a 2D uint8 image for display only.
-        Uses striding (nearest) to be very fast and avoid float work.
+        Downscale (or upscale for small N) a 2D uint8 image for display only.
+        Uses striding (nearest) / repeats to be very fast and avoid float work.
         """
         N = self.sim.N
 
-        if N < 768:
+        if N <= 256:
+            scale = 0.5
+        elif N < 768:
             scale = 1
         elif N <= 1024:
             scale = 2
@@ -583,6 +628,10 @@ class MainWindow(QMainWindow):
 
         if scale == 1:
             return np.ascontiguousarray(pix)
+
+        if scale < 1:
+            up = int(round(1.0 / scale))
+            return np.ascontiguousarray(np.repeat(np.repeat(pix, up, axis=0), up, axis=1))
 
         return np.ascontiguousarray(pix[::scale, ::scale])
 
@@ -785,9 +834,15 @@ class MainWindow(QMainWindow):
         # 1) Update the image first
         self._update_image(self.sim.get_frame_pixels())
 
-        # 2) Compute new geometry
-        new_w = self.image_label.pixmap().width() + 40
-        new_h = self.image_label.pixmap().height() + 120
+        # 2) Compute new geometry from intended display size (NOT pixmap)
+        disp_w, disp_h = self._display_size_px()
+        new_w = disp_w + 40
+        new_h = disp_h + 120
+
+        # Half-height only when not upscaling (scale >= 1)
+        if self._display_scale() >= 1:
+            new_h //= 2
+
         print("Resize to:", new_w, new_h)
 
         # 3) Allow the window to shrink (RESET constraints)
@@ -802,6 +857,7 @@ class MainWindow(QMainWindow):
         g = self.geometry()
         g.moveCenter(screen.center())
         self.setGeometry(g)
+
         self._build_layout()
         self._sim_start_time = time.time()
         self._sim_start_iter = self.sim.get_iteration()
@@ -1028,7 +1084,7 @@ def main() -> None:
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
 
-    sim = DnsSimulator(n=384)
+    sim = DnsSimulator(n=192)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()

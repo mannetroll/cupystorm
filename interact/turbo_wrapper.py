@@ -32,10 +32,10 @@ class DnsSimulator:
 
     def __init__(
         self,
-        n: int = 384,
-        re: float = 10000.0,
-        k0: float = 15.0,
-        cfl: float = 0.5,
+        n: int = 128,
+        re: float = 10000,
+        k0: float = 1.0,
+        cfl: float = 0.15,
         seed: int = 1,
     ):
         self.N = int(n)
