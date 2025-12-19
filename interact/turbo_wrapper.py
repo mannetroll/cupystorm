@@ -87,7 +87,10 @@ class DnsSimulator:
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
             # CFLM * DT * PI = CFLNUM  →  DT = CFLNUM / (CFLM * PI)
-            self.state.dt = self.state.cflnum / (CFLM * math.pi)
+            if CFLM == 0.0:
+                self.state.dt = 0.01
+            else:
+                self.state.dt = self.state.cflnum / (CFLM * math.pi)
             self.state.cn = 1.0
             self.state.cnm1 = 0.0
 
@@ -175,7 +178,10 @@ class DnsSimulator:
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
 
-        self.state.dt = self.state.cflnum / (CFLM * math.pi)
+        if CFLM == 0.0:
+            self.state.dt = 0.01
+        else:
+            self.state.dt = self.state.cflnum / (CFLM * math.pi)
         self.state.cn = 1.0
         self.state.cnm1 = 0.0
 
@@ -218,7 +224,10 @@ class DnsSimulator:
             dns_all.dns_step2a(self.state)
             CFLM = dns_all.compute_cflm(self.state)
 
-        self.state.dt = self.state.cflnum / (CFLM * math.pi)
+        if CFLM == 0.0:
+            self.state.dt = 0.01
+        else:
+            self.state.dt = self.state.cflnum / (CFLM * math.pi)
         self.state.cn = 1.0
         self.state.cnm1 = 0.0
 
@@ -229,6 +238,22 @@ class DnsSimulator:
     # ------------------------------------------------------------------
     def diagnostics(self) -> dict:
         return {"t": float(self.t), "dt": float(self.dt), "cn": float(self.cn)}
+
+    def set_body_force(
+        self,
+        ix_full: int,
+        iz_full: int,
+        amp: float = 0.2,
+        sigma: float = 12.0,
+        active: bool = True,
+    ) -> None:
+        S = self.state
+        S.force_active = bool(active)
+        S.force_dirty = True
+        S.force_ix_full = int(ix_full)
+        S.force_iz_full = int(iz_full)
+        S.force_amp = float(amp)
+        S.force_sigma = float(sigma)
 
     # ------------------------------------------------------------------
     def _float_to_pixels(self, field: np.ndarray) -> np.ndarray:

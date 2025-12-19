@@ -286,6 +286,21 @@ class DnsState:
     step3_mask_ix0: any = None    # bool (NZ,)
     step3_divxz: any = None       # float32 scalar
 
+    # External body-force (GUI localized forcing)
+    force_active: bool = False
+    force_dirty: bool = True
+    force_ix_full: int = 0
+    force_iz_full: int = 0
+    force_amp: float = 0.0
+    force_sigma: float = 12.0
+
+    force_x_idx: any = None
+    force_z_idx: any = None
+    force_u_full: any = None
+    force_uc_full: any = None
+    force_u_hat_low: any = None
+    force_omega_hat: any = None
+
     def sync(self):
         """For a CuPy backend, force synchronization at convenient checkpoints."""
         if self.backend == "gpu":
@@ -373,8 +388,8 @@ def create_dns_state(
     state.alfa = xp.zeros((NX_half,), dtype=xp.float32)
     state.gamma = xp.zeros((NZ,), dtype=xp.float32)
 
-    # PAO-style initialization (dnsCudaPaoHostInit)
-    dns_pao_host_init(state)
+    # Zero-field initialization (start from rest)
+    dns_zero_host_init(state)
 
     # DT and CN will be initialized in run_dns via CFL (like CUDA)
     state.dt = 0.0
@@ -430,11 +445,73 @@ def create_dns_state(
     NZ32 = xp.float32(1.5) * xp.float32(state.Nbase)
     state.step3_divxz = xp.float32(1.0) / (NX32 * NZ32)
 
+
+    # ----------------------------------------------------------
+    # GUI body-force buffers (real-space Gaussian blob forcing)
+    # ----------------------------------------------------------
+    state.force_active = False
+    state.force_dirty = True
+    state.force_ix_full = 0
+    state.force_iz_full = 0
+    state.force_amp = 0.0
+    state.force_sigma = 12.0
+
+    state.force_x_idx = xp.arange(state.NX_full, dtype=xp.float32)
+    state.force_z_idx = xp.arange(state.NZ_full, dtype=xp.float32)
+
+    state.force_u_full = xp.empty((state.NZ_full, state.NX_full), dtype=xp.float32)
+    state.force_uc_full = xp.empty((state.NZ_full, state.NK_full), dtype=xp.complex64)
+    state.force_u_hat_low = xp.empty((state.Nbase, state.Nbase // 2), dtype=xp.complex64)
+    state.force_omega_hat = xp.zeros((state.Nbase, state.Nbase // 2), dtype=xp.complex64)
     return state
 
 # ===============================================================
 # Python/Numpy/Scipy port of dnsCudaPaoHostInit, wired into DnsState
 # ===============================================================
+
+# ===============================================================
+# Zero-field initialization (start from rest)
+# ===============================================================
+def dns_zero_host_init(S: DnsState) -> None:
+    xp = S.xp
+    N = S.NX
+    NE = S.NZ
+    ND2 = N // 2
+    NED2 = NE // 2
+
+    # Match the PAO wavenumber convention, but do NOT populate any energy.
+    alfa = np.zeros(ND2, dtype=np.float32)
+    gamma = np.zeros(NE, dtype=np.float32)
+
+    E1 = np.float32(1.0)
+    E3 = np.float32(1.0) / E1
+    DALFA = np.float32(1.0) / E1
+    DGAMMA = np.float32(1.0) / E3
+
+    for x in range(NED2):
+        alfa[x] = np.float32(x) * DALFA
+
+    gamma[0] = np.float32(0.0)
+    for z in range(1, NED2 + 1):
+        gamma[z] = np.float32(z) * DGAMMA
+        gamma[NE - z] = -gamma[z]
+
+    S.alfa = xp.asarray(alfa, dtype=xp.float32)
+    S.gamma = xp.asarray(gamma, dtype=xp.float32)
+
+    # Ensure a fully-resting initial condition.
+    S.ur[...] = xp.float32(0.0)
+    S.uc[...] = xp.complex64(0.0 + 0.0j)
+    S.ur_full[...] = xp.float32(0.0)
+    S.uc_full[...] = xp.complex64(0.0 + 0.0j)
+    S.om2[...] = xp.complex64(0.0 + 0.0j)
+    S.fnm1[...] = xp.complex64(0.0 + 0.0j)
+
+    # No forcing at start.
+    S.force_active = False
+    S.force_dirty = True
+    S.force_amp = 0.0
+
 def dns_pao_host_init(S: DnsState):
     xp = S.xp
     N = S.NX
@@ -894,6 +971,60 @@ def dns_step2b(S: DnsState) -> None:
 # ---------------------------------------------------------------------------
 # STEP3 — vorticity update using om2 & fnm1
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------
+# GUI body-force → spectral vorticity forcing (curl(f) in k-space)
+# ---------------------------------------------------------------
+def _update_force_omega_hat(S: DnsState) -> None:
+    xp = S.xp
+    fft = S.fft
+    if fft is None:
+        raise RuntimeError("FFT module is not available.")
+
+    NX_full = int(S.NX_full)
+    NZ_full = int(S.NZ_full)
+    NX_half = int(S.Nbase // 2)
+
+    # Real-space coordinates (full 3/2 grid), broadcasted
+    x = S.force_x_idx[None, :]
+    z = S.force_z_idx[:, None]
+
+    x0 = xp.float32(S.force_ix_full)
+    z0 = xp.float32(S.force_iz_full)
+
+    # Periodic distances (wrap-around)
+    dx = xp.abs(x - x0)
+    dz = xp.abs(z - z0)
+    dx = xp.minimum(dx, xp.float32(NX_full) - dx)
+    dz = xp.minimum(dz, xp.float32(NZ_full) - dz)
+
+    r2 = dx * dx + dz * dz
+
+    sigma = xp.float32(S.force_sigma)
+    inv2sig2 = xp.float32(0.5) / (sigma * sigma)
+    amp = xp.float32(S.force_amp)
+
+    # Force in +x (u-component): Gaussian blob in real space
+    S.force_u_full[...] = amp * xp.exp(-r2 * inv2sig2)
+
+    # FFT to spectral (kz,kx): (NZ_full, NK_full)
+    FU = fft.rfft2(S.force_u_full, s=(NZ_full, NX_full), axes=(0, 1))
+    S.force_uc_full[...] = xp.asarray(FU, dtype=xp.complex64)
+
+    # Gather low-kz strip to match OM2 grid ordering (same mapping as STEP3)
+    z_spec = S.step3_z_spec
+    xp.take(S.force_uc_full[:, :NX_half], z_spec, axis=0, out=S.force_u_hat_low)
+
+    # Curl in spectral: OM2_force = i*(GAMMA*FU - ALFA*FW). Here FW=0.
+    # Apply the same normalization DIVXZ as the nonlinear term uses.
+    divxz = S.step3_divxz
+    S.force_omega_hat[...] = S.force_u_hat_low
+    S.force_omega_hat *= S.gamma[:, None]
+    S.force_omega_hat *= xp.complex64(1.0j) * divxz
+
+    S.force_dirty = False
+
 def dns_step3(S: DnsState) -> None:
     """
     STEP3 — update spectral vorticity OM2 and non-linear term FNM1,
@@ -957,6 +1088,15 @@ def dns_step3(S: DnsState) -> None:
     xp.multiply(uc3_th, G2mA2, out=tmp_c)           # (G2-A2)*UC3
     xp.add(tmp_FN, tmp_c, out=tmp_FN)               # sum
     tmp_FN *= divxz
+
+    # ---------------------------------------------------------------
+    # Add external vorticity forcing from GUI body-force (if active)
+    # ---------------------------------------------------------------
+    if S.force_active:
+        if S.force_dirty:
+            _update_force_omega_hat(S)
+        tmp_FN += S.force_omega_hat
+
 
     # Crank–Nicolson in spectral space (Fortran STEP3), update OM2 in-place
     VT = xp.float32(0.5) * visc * dt

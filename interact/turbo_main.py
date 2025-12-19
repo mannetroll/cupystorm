@@ -6,7 +6,7 @@ import time
 from typing import Optional
 
 from pathlib import Path
-from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths
+from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths, Signal
 from PySide6.QtGui import QIcon, QImage, QPixmap, QFontDatabase, qRgb, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
@@ -283,6 +283,9 @@ QT_COLOR_TABLES = {
     name: [qRgb(int(rgb[0]), int(rgb[1]), int(rgb[2])) for rgb in lut]
     for name, lut in COLOR_MAPS.items()
 }
+
+DEFAULT_FORCE_AMP = 0.2
+DEFAULT_FORCE_SIGMA = 12.0
 QT_GRAY_TABLE = [qRgb(i, i, i) for i in range(256)]
 
 
@@ -319,6 +322,16 @@ def _setup_shortcuts(self):
     ))
 
 
+
+class ClickableLabel(QLabel):
+    clicked = Signal(int, int)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            p = event.position()
+            self.clicked.emit(int(p.x()), int(p.y()))
+        super().mousePressEvent(event)
+
 class MainWindow(QMainWindow):
     def __init__(self, sim: DnsSimulator) -> None:
         super().__init__()
@@ -327,7 +340,7 @@ class MainWindow(QMainWindow):
         self.current_cmap_name = DEFAULT_CMAP_NAME
 
         # --- central image label ---
-        self.image_label = QLabel()
+        self.image_label = ClickableLabel()
         # allow shrinking when grid size becomes smaller
         self.image_label.setSizePolicy(
             self.image_label.sizePolicy().horizontalPolicy(),
@@ -335,6 +348,7 @@ class MainWindow(QMainWindow):
         )
         self.image_label.setMinimumSize(1, 1)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.clicked.connect(self.on_image_clicked)
 
         # --- small icon buttons ---
         style = QApplication.style()
@@ -616,6 +630,33 @@ class MainWindow(QMainWindow):
         running = self.timer.isActive()
         self.start_button.setEnabled(not running)
         self.stop_button.setEnabled(running)
+
+    def on_image_clicked(self, lx: int, ly: int) -> None:
+        pix = self.image_label.pixmap()
+        if pix is None:
+            return
+
+        pw = pix.width()
+        ph = pix.height()
+        lw = self.image_label.width()
+        lh = self.image_label.height()
+
+        # QLabel is center-aligned; account for letterbox offsets
+        ox = (lw - pw) // 2
+        oy = (lh - ph) // 2
+
+        x = lx - ox
+        y = ly - oy
+
+        if 0 <= x < pw and 0 <= y < ph:
+            # Map 1:1: image pixels are the full 3/2 grid (NZ_full x NX_full)
+            self.sim.set_body_force(
+                x,
+                y,
+                amp=DEFAULT_FORCE_AMP,
+                sigma=DEFAULT_FORCE_SIGMA,
+                active=True,
+            )
 
     def on_start_clicked(self) -> None:
         # reset FPS baseline to "new simulation start"
