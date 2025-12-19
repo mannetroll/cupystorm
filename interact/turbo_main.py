@@ -438,7 +438,7 @@ class MainWindow(QMainWindow):
         self.update_combo = QComboBox()
         self.update_combo.setToolTip("U: Update intervall")
         self.update_combo.addItems(["2", "5", "10", "20", "50", "100", "1000"])
-        self.update_combo.setCurrentText("100")
+        self.update_combo.setCurrentText("50")
 
         self.auto_reset_checkbox = QCheckBox()
         self.auto_reset_checkbox.setToolTip("If checked, simulation auto-resets")
@@ -899,7 +899,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
     def _on_timer(self) -> None:
         # one DNS step per timer tick
-        self.sim.step(self._update_intervall)
+        self.sim.step(self._update_intervall, run_next_dt=True)
 
         # Count frames since the last GUI update
         self._status_update_counter += 1
@@ -1085,7 +1085,7 @@ def main() -> None:
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
 
-    sim = DnsSimulator(n=128)
+    sim = DnsSimulator(n=192)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
