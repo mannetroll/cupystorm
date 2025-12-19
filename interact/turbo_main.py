@@ -323,14 +323,34 @@ def _setup_shortcuts(self):
 
 
 
+# --- Replace ClickableLabel with this version ---
+
 class ClickableLabel(QLabel):
-    clicked = Signal(int, int)
+    clicked = Signal(int, int)      # kept (if you still want single-click elsewhere)
+    pressed = Signal(int, int)
+    moved = Signal(int, int)
+    released = Signal(int, int)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
             p = event.position()
-            self.clicked.emit(int(p.x()), int(p.y()))
+            x = int(p.x())
+            y = int(p.y())
+            self.pressed.emit(x, y)
+            self.clicked.emit(x, y)
         super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.MouseButton.LeftButton:
+            p = event.position()
+            self.moved.emit(int(p.x()), int(p.y()))
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            p = event.position()
+            self.released.emit(int(p.x()), int(p.y()))
+        super().mouseReleaseEvent(event)
 
 class MainWindow(QMainWindow):
     def __init__(self, sim: DnsSimulator) -> None:
@@ -341,14 +361,20 @@ class MainWindow(QMainWindow):
 
         # --- central image label ---
         self.image_label = ClickableLabel()
-        # allow shrinking when grid size becomes smaller
         self.image_label.setSizePolicy(
             self.image_label.sizePolicy().horizontalPolicy(),
             self.image_label.sizePolicy().verticalPolicy()
         )
         self.image_label.setMinimumSize(1, 1)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_label.clicked.connect(self.on_image_clicked)
+
+        # drag-to-force
+        self._force_dragging = False
+        self._force_last_xy: Optional[tuple[int, int]] = None
+
+        self.image_label.pressed.connect(self.on_image_pressed)
+        self.image_label.moved.connect(self.on_image_moved)
+        self.image_label.released.connect(self.on_image_released)
 
         # --- small icon buttons ---
         style = QApplication.style()
@@ -1076,6 +1102,90 @@ class MainWindow(QMainWindow):
 
         super().keyPressEvent(event)
 
+# --- Add these helpers + handlers inside MainWindow (replace your on_image_clicked) ---
+
+    def _map_label_xy_to_sim_xy(self, lx: int, ly: int) -> Optional[tuple[int, int]]:
+        pix = self.image_label.pixmap()
+        if pix is None:
+            return None
+
+        pw = pix.width()
+        ph = pix.height()
+        lw = self.image_label.width()
+        lh = self.image_label.height()
+
+        # QLabel is center-aligned; account for letterbox offsets
+        ox = (lw - pw) // 2
+        oy = (lh - ph) // 2
+
+        x = lx - ox
+        y = ly - oy
+
+        if not (0 <= x < pw and 0 <= y < ph):
+            return None
+
+        # Map display pixels -> simulation pixels for BOTH upscaling and downscaling
+        scale = self._display_scale()
+
+        if scale < 1.0:
+            up = int(round(1.0 / scale))  # 0.5 -> 2, 0.25 -> 4
+            x //= up
+            y //= up
+        elif scale > 1.0:
+            s = int(round(scale))         # 2, 4, 6
+            x *= s
+            y *= s
+
+        # Clamp to simulation pixel bounds
+        sx_max = int(self.sim.px) - 1
+        sy_max = int(self.sim.py) - 1
+        if sx_max >= 0:
+            x = 0 if x < 0 else (sx_max if x > sx_max else x)
+        if sy_max >= 0:
+            y = 0 if y < 0 else (sy_max if y > sy_max else y)
+
+        return (int(x), int(y))
+
+    def _apply_force_from_label_xy(self, lx: int, ly: int, active: bool) -> None:
+        xy = self._map_label_xy_to_sim_xy(lx, ly)
+        if xy is None:
+            return
+        x, y = xy
+        self._force_last_xy = (x, y)
+        self.sim.set_body_force(
+            x,
+            y,
+            amp=DEFAULT_FORCE_AMP,
+            sigma=DEFAULT_FORCE_SIGMA,
+            active=active,
+        )
+
+    def on_image_pressed(self, lx: int, ly: int) -> None:
+        self._force_dragging = True
+        self.image_label.grabMouse()
+        self._apply_force_from_label_xy(lx, ly, active=True)
+
+    def on_image_moved(self, lx: int, ly: int) -> None:
+        if not self._force_dragging:
+            return
+        self._apply_force_from_label_xy(lx, ly, active=True)
+
+    def on_image_released(self, lx: int, ly: int) -> None:
+        if not self._force_dragging:
+            return
+        self._force_dragging = False
+        self.image_label.releaseMouse()
+
+        # Turn off force when button is released (use last valid sim xy)
+        if self._force_last_xy is not None:
+            x, y = self._force_last_xy
+            self.sim.set_body_force(
+                x,
+                y,
+                amp=DEFAULT_FORCE_AMP,
+                sigma=DEFAULT_FORCE_SIGMA,
+                active=False,
+            )
 
 # ----------------------------------------------------------------------
 def main() -> None:
