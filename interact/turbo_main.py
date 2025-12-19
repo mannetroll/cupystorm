@@ -432,7 +432,7 @@ class MainWindow(QMainWindow):
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
         self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "1E6"])
-        self.steps_combo.setCurrentText("50000")
+        self.steps_combo.setCurrentText("1E6")
 
         # Update selector
         self.update_combo = QComboBox()
