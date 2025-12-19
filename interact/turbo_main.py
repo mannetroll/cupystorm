@@ -389,7 +389,7 @@ class MainWindow(QMainWindow):
         self.folder_button.setIconSize(QSize(14, 14))
 
         self._status_update_counter = 0
-        self._update_intervall = 2
+        self._update_intervall = 20
 
         # Variable selector
         self.variable_combo = QComboBox()
@@ -438,7 +438,7 @@ class MainWindow(QMainWindow):
         self.update_combo = QComboBox()
         self.update_combo.setToolTip("U: Update intervall")
         self.update_combo.addItems(["2", "5", "10", "20", "50", "100", "1000"])
-        self.update_combo.setCurrentText("50")
+        self.update_combo.setCurrentText("100")
 
         self.auto_reset_checkbox = QCheckBox()
         self.auto_reset_checkbox.setToolTip("If checked, simulation auto-resets")
@@ -517,7 +517,9 @@ class MainWindow(QMainWindow):
         self._update_image(self.sim.get_frame_pixels())
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
 
+        # set combobox data
         self.on_steps_changed(self.steps_combo.currentText())
+        self.on_update_changed(self.update_combo.currentText())
         self.on_start_clicked()  # auto-start simulation immediately
 
     # ------------------------------------------------------------------
@@ -610,7 +612,7 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(central)
 
-    def _maybe_downscale_u8(self, pix: np.ndarray) -> np.ndarray:
+    def _upscale_downscale_u8(self, pix: np.ndarray) -> np.ndarray:
         """
         Downscale (or upscale for small N) a 2D uint8 image for display only.
         Uses striding (nearest) / repeats to be very fast and avoid float work.
@@ -965,7 +967,7 @@ class MainWindow(QMainWindow):
         if pixels.ndim != 2:
             return
 
-        pixels = self._maybe_downscale_u8(pixels)
+        pixels = self._upscale_downscale_u8(pixels)
         h, w = pixels.shape
 
         # Keep numpy buffer alive for QImage
@@ -1079,7 +1081,7 @@ class MainWindow(QMainWindow):
 def main() -> None:
     app = QApplication(sys.argv)
 
-    icon_path = Path(__file__).with_name("scipyturbo.icns")
+    icon_path = Path(__file__).with_name("interact.icns")
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
 
