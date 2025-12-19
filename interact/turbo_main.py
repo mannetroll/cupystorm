@@ -527,6 +527,8 @@ class MainWindow(QMainWindow):
         """
         N = self.sim.N
 
+        if N <= 128:
+            return 0.25
         if N <= 256:
             return 0.5
         if N < 768:
@@ -613,27 +615,17 @@ class MainWindow(QMainWindow):
         Downscale (or upscale for small N) a 2D uint8 image for display only.
         Uses striding (nearest) / repeats to be very fast and avoid float work.
         """
-        N = self.sim.N
+        scale = self._display_scale()
 
-        if N <= 256:
-            scale = 0.5
-        elif N < 768:
-            scale = 1
-        elif N <= 1024:
-            scale = 2
-        elif N <= 3072:
-            scale = 4
-        else:
-            scale = 6
-
-        if scale == 1:
+        if scale == 1.0:
             return np.ascontiguousarray(pix)
 
-        if scale < 1:
-            up = int(round(1.0 / scale))
+        if scale < 1.0:
+            up = int(round(1.0 / scale))  # 0.5 -> 2, 0.25 -> 4
             return np.ascontiguousarray(np.repeat(np.repeat(pix, up, axis=0), up, axis=1))
 
-        return np.ascontiguousarray(pix[::scale, ::scale])
+        s = int(scale)  # 2,4,6,...
+        return np.ascontiguousarray(pix[::s, ::s])
 
     def _get_full_field(self, variable: str) -> np.ndarray:
         """
@@ -698,10 +690,17 @@ class MainWindow(QMainWindow):
         y = ly - oy
 
         if 0 <= x < pw and 0 <= y < ph:
-            # Map 1:1: image pixels are the full 3/2 grid (NZ_full x NX_full)
+            # Map display pixels -> simulation pixels when upscaled.
+            # For scale < 1, _maybe_downscale_u8 uses np.repeat with factor up = round(1/scale)
+            scale = self._display_scale()
+            if scale < 1.0:
+                up = int(round(1.0 / scale))
+                x = x // up
+                y = y // up
+
             self.sim.set_body_force(
-                x,
-                y,
+                int(x),
+                int(y),
                 amp=DEFAULT_FORCE_AMP,
                 sigma=DEFAULT_FORCE_SIGMA,
                 active=True,
@@ -1084,7 +1083,7 @@ def main() -> None:
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
 
-    sim = DnsSimulator(n=192)
+    sim = DnsSimulator(n=128)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
