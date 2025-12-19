@@ -493,13 +493,9 @@ class MainWindow(QMainWindow):
                 pass
 
         self.setWindowTitle(f"2D Turbulence {title_backend} © Mannetroll")
-        # --- FIX: size window from intended display size, not pixmap, and
-        #          don't halve height when we are upscaling (scale < 1).
         disp_w, disp_h = self._display_size_px()
         win_w = disp_w + 40
         win_h = disp_h + 120
-        if self._display_scale() > 1:
-            win_h //= 2
         self.resize(win_w, win_h)
 
         # Keep-alive buffers for QImage wrappers
@@ -840,10 +836,6 @@ class MainWindow(QMainWindow):
         new_w = disp_w + 40
         new_h = disp_h + 120
 
-        # Half-height only when we are DOWNscaling (scale > 1), not at 1:1 (scale == 1)
-        if self._display_scale() > 1.0:
-            new_h //= 2
-
         print("Resize to:", new_w, new_h)
 
         # 3) Allow the window to shrink (RESET constraints)
@@ -858,6 +850,10 @@ class MainWindow(QMainWindow):
         g = self.geometry()
         g.moveCenter(screen.center())
         self.setGeometry(g)
+
+        self._build_layout()
+        self._sim_start_time = time.time()
+        self._sim_start_iter = self.sim.get_iteration()
 
         self._build_layout()
         self._sim_start_time = time.time()
