@@ -688,13 +688,17 @@ class MainWindow(QMainWindow):
         y = ly - oy
 
         if 0 <= x < pw and 0 <= y < ph:
-            # Map display pixels -> simulation pixels when upscaled.
-            # For scale < 1, _maybe_downscale_u8 uses np.repeat with factor up = round(1/scale)
+            # Map display pixels -> simulation pixels for BOTH upscaling and downscaling
             scale = self._display_scale()
+
             if scale < 1.0:
-                up = int(round(1.0 / scale))
+                up = int(round(1.0 / scale))  # 0.5 -> 2, 0.25 -> 4
                 x = x // up
                 y = y // up
+            elif scale > 1.0:
+                s = int(round(scale))  # 2, 4, 6
+                x = x * s
+                y = y * s
 
             self.sim.set_body_force(
                 int(x),
