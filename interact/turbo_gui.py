@@ -1,15 +1,10 @@
 # turbo_gui.py
-import os
-import sys
 import time
-from pathlib import Path
 from typing import Optional
 
-import numpy as np
 from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths, Signal
 from PySide6.QtGui import (
     QFontDatabase,
-    QIcon,
     QImage,
     QKeySequence,
     QPixmap,
@@ -22,7 +17,6 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QMainWindow,
     QPushButton,
     QStatusBar,
@@ -30,12 +24,11 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+import numpy as np
 
 from interact.turbo_colors import (
     COLOR_MAPS,
     DEFAULT_CMAP_NAME,
-    DEFAULT_FORCE_AMP,
-    DEFAULT_FORCE_SIGMA,
     QT_COLOR_TABLES,
     QT_GRAY_TABLE,
 )
@@ -587,4 +580,3 @@ class MainWindow(QMainWindow, TurboLogicMixin):
             return
 
         super().keyPressEvent(event)
-
