@@ -4,13 +4,29 @@ import os
 import time
 from typing import Optional
 
+from PySide6.QtCore import QTimer
 import numpy as np
 
 from interact import turbo_simulator as dns_all
 from interact.turbo_colors import DEFAULT_FORCE_AMP, DEFAULT_FORCE_SIGMA
+from interact.turbo_wrapper import DnsSimulator
 
 
 class TurboLogicMixin:
+    # These are provided by the concrete MainWindow class (or another mixin),
+    # but we declare them here so type-checkers stop complaining.
+    sim: DnsSimulator
+    timer: QTimer
+    _force_mode: str
+
+    _sim_start_time: float
+    _sim_start_iter: int
+    _status_update_counter: int
+    _update_intervall: int
+
+    _force_dragging: bool
+    _force_last_xy: Optional[tuple[int, int]]
+
     def _logic_init_defaults(self) -> None:
         # Force/init mode selector
         #   "pao"   : PAO spectrum init (no auto force)
