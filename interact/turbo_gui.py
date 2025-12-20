@@ -182,7 +182,7 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self.init_pao_button = QPushButton("PAO")
         self.init_pao_button.setToolTip("Initilize with PAO spectrum")
 
-        self.init_circle_button = QPushButton("Cirle")
+        self.init_circle_button = QPushButton("Circle")
         self.init_circle_button.setToolTip("Initialize with circle stirring")
 
         self.init_rain_button = QPushButton("Rain")
