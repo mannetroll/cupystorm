@@ -826,11 +826,53 @@ class MainWindow(QMainWindow):
         self._update_status(t, it, fps=None)
 
     def on_reset_clicked(self) -> None:
-        self.on_stop_clicked()
-        self.sim.reset_field()
-        self._update_image(self.sim.get_frame_pixels())
-        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
-        self.on_start_clicked()
+        was_running = self.timer.isActive()
+        if was_running:
+            self.on_stop_clicked()
+
+        # Reset should restart the *current* mode, and not change it.
+        if self._force_mode == "pao":
+            self.sim.reset_field()
+            dns_all.dns_pao_host_init(self.sim.state)
+            self._post_init_nextdt()
+
+            self.sim.state.force_active = False
+            self.sim.state.force_dirty = True
+
+            self._reset_gui_after_init()
+
+        elif self._force_mode == "circle":
+            self.sim.reset_field()
+
+            self.cx = 0.5 * (self.sim.px - 1)
+            self.cy = 0.5 * (self.sim.py - 1)
+            self.R = self.sim.py / 4.0
+
+            x = self.cx + self.R * math.cos(0)
+            y = self.cy + self.R * math.sin(0)
+
+            self.sim.set_body_force(
+                int(x), int(y),
+                amp=DEFAULT_FORCE_AMP,
+                sigma=DEFAULT_FORCE_SIGMA,
+                active=True,
+            )
+
+            self._reset_gui_after_init()
+
+        elif self._force_mode == "rain":
+            self.sim.reset_field()
+            self._injector_reset()
+            self._reset_gui_after_init()
+
+        elif self._force_mode == "mouse":
+            self.sim.reset_field()
+            self.sim.state.force_active = False
+            self.sim.state.force_dirty = True
+            self._reset_gui_after_init()
+
+        if was_running:
+            self.on_start_clicked()
 
     def _post_init_nextdt(self) -> None:
         S = self.sim.state
