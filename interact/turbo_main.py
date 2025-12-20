@@ -16,7 +16,7 @@ def main() -> None:
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 
-    sim = DnsSimulator(n=192)
+    sim = DnsSimulator(n=256)
     sim.step(1)
 
     window = MainWindow(sim)
