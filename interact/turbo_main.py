@@ -354,10 +354,9 @@ class ClickableLabel(QLabel):
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, sim: DnsSimulator, first_time: bool = False) -> None:
+    def __init__(self, sim: DnsSimulator) -> None:
         super().__init__()
 
-        self._first_time = first_time
         self.sim = sim
         self.current_cmap_name = DEFAULT_CMAP_NAME
 
@@ -366,7 +365,7 @@ class MainWindow(QMainWindow):
         #   "circle": circle stirring (auto force)
         #   "rain"  : random body-force kicks (auto force)
         #   "mouse" : mouse drag force only (no auto force)
-        self._force_mode = "circle" if first_time else "mouse"
+        self._force_mode = "circle"
 
         # --- central image label ---
         self.image_label = ClickableLabel()
@@ -599,11 +598,10 @@ class MainWindow(QMainWindow):
         x = self.cx + self.R * math.cos(0)
         y = self.cy + self.R * math.sin(0)
 
-        if self._first_time and self._force_mode == "circle":
-            self.sim.set_body_force(int(x), int(y),
-                                    amp=DEFAULT_FORCE_AMP,
-                                    sigma=DEFAULT_FORCE_SIGMA,
-                                    active=True)
+        self.sim.set_body_force(int(x), int(y),
+                                amp=DEFAULT_FORCE_AMP,
+                                sigma=DEFAULT_FORCE_SIGMA,
+                                active=True)
 
     # ------------------------------------------------------------------
     def _display_scale(self) -> float:
@@ -833,7 +831,6 @@ class MainWindow(QMainWindow):
         self._update_image(self.sim.get_frame_pixels())
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
         self.on_start_clicked()
-        self._first_time = False
 
     def _post_init_nextdt(self) -> None:
         S = self.sim.state
@@ -874,7 +871,6 @@ class MainWindow(QMainWindow):
         self.sim.state.force_dirty = True
 
         self._force_mode = "pao"
-        self._first_time = False
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -898,7 +894,6 @@ class MainWindow(QMainWindow):
                                 active=True)
 
         self._force_mode = "circle"
-        self._first_time = True
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -911,7 +906,6 @@ class MainWindow(QMainWindow):
         self._injector_reset()
 
         self._force_mode = "rain"
-        self._first_time = True
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -925,7 +919,6 @@ class MainWindow(QMainWindow):
         self.sim.state.force_dirty = True
 
         self._force_mode = "mouse"
-        self._first_time = False
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -1127,18 +1120,17 @@ class MainWindow(QMainWindow):
         # Count frames since the last GUI update
         self._status_update_counter += 1
 
-        if self._first_time:
-            if self._force_mode == "circle":
-                theta = 2.0 * math.pi * self.f_hz * t
-                x = self.cx + self.R * math.cos(theta)
-                y = self.cy - self.R * math.sin(theta)
+        if self._force_mode == "circle":
+            theta = 2.0 * math.pi * self.f_hz * t
+            x = self.cx + self.R * math.cos(theta)
+            y = self.cy - self.R * math.sin(theta)
 
-                self.sim.set_body_force(int(x), int(y),
-                                        amp=DEFAULT_FORCE_AMP,
-                                        sigma=DEFAULT_FORCE_SIGMA,
-                                        active=True)
-            elif self._force_mode == "rain":
-                self._injector_maybe_apply()
+            self.sim.set_body_force(int(x), int(y),
+                                    amp=DEFAULT_FORCE_AMP,
+                                    sigma=DEFAULT_FORCE_SIGMA,
+                                    active=True)
+        elif self._force_mode == "rain":
+            self._injector_maybe_apply()
 
         if self._status_update_counter >= self._update_intervall:
             pixels = self.sim.get_frame_pixels()
@@ -1413,7 +1405,7 @@ def main() -> None:
     app.setWindowIcon(icon)
     sim = DnsSimulator(n=192)
     sim.step(1)
-    window = MainWindow(sim, first_time=True)
+    window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
     g.moveCenter(screen.center())
