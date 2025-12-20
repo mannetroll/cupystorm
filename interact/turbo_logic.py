@@ -275,24 +275,18 @@ class TurboLogicMixin:
 
     def on_re_changed(self, value: str) -> None:
         self.sim.re = float(value)
-        self.sim.reset_field()
-        self._sim_start_time = time.time()
-        self._sim_start_iter = self.sim.get_iteration()
-        self._update_image(self.sim.get_frame_pixels())
+        # Re-init the current mode (pao/circle/rain/mouse) instead of a raw reset_field().
+        self.on_reset_clicked()
 
     def on_k0_changed(self, value: str) -> None:
         self.sim.k0 = float(value)
-        self.sim.reset_field()
-        self._sim_start_time = time.time()
-        self._sim_start_iter = self.sim.get_iteration()
-        self._update_image(self.sim.get_frame_pixels())
+        # Re-init the current mode (pao/circle/rain/mouse) instead of a raw reset_field().
+        self.on_reset_clicked()
 
     def on_cfl_changed(self, value: str) -> None:
         self.sim.cfl = float(value)
-        self.sim.reset_field()
-        self._sim_start_time = time.time()
-        self._sim_start_iter = self.sim.get_iteration()
-        self._update_image(self.sim.get_frame_pixels())
+        # Re-init the current mode (pao/circle/rain/mouse) instead of a raw reset_field().
+        self.on_reset_clicked()
 
     def on_steps_changed(self, value: str) -> None:
         self.sim.max_steps = int(float(value))

@@ -507,35 +507,42 @@ class MainWindow(QMainWindow, TurboLogicMixin):
             self._update_image(self.sim.get_frame_pixels())
 
     def on_n_changed(self, value: str) -> None:
-        was_running = self.timer.isActive()
-        if was_running:
-            self.on_stop_clicked()
-
         N = int(value)
         self.sim.set_N(N)
 
-        # Keep the current mode behavior after changing N (do NOT change _force_mode)
-        # This fixes the "press N changes mode" feeling (force state gets re-applied).
-        self.on_reset_clicked()
+        # 1) Update the image first
+        self._update_image(self.sim.get_frame_pixels())
 
-        # Resize window to match new display size
+        # 2) Compute new geometry from intended display size (NOT pixmap)
         disp_w, disp_h = self._display_size_px()
         new_w = disp_w + 40
         new_h = disp_h + 120
 
+        print("Resize to:", new_w, new_h)
+
+        # 3) Allow the window to shrink (RESET constraints)
         self.setMinimumSize(0, 0)
         self.setMaximumSize(16777215, 16777215)
+
+        # 4) Now resize → Qt WILL shrink
         self.resize(new_w, new_h)
 
+        # 5) Recenter
         screen = QApplication.primaryScreen().availableGeometry()
         g = self.geometry()
         g.moveCenter(screen.center())
         self.setGeometry(g)
 
         self._build_layout()
+        self._sim_start_time = time.time()
+        self._sim_start_iter = self.sim.get_iteration()
 
-        if was_running:
-            self.on_start_clicked()
+        self._build_layout()
+        self._sim_start_time = time.time()
+        self._sim_start_iter = self.sim.get_iteration()
+
+        # IMPORTANT: keep current mode after changing N
+        self.on_reset_clicked()
 
     def keyPressEvent(self, event) -> None:
         key = event.key()
