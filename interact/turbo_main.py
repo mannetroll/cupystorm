@@ -284,7 +284,7 @@ QT_COLOR_TABLES = {
     for name, lut in COLOR_MAPS.items()
 }
 
-DEFAULT_FORCE_AMP = 0.2
+DEFAULT_FORCE_AMP = 0.5
 DEFAULT_FORCE_SIGMA = 12.0
 QT_GRAY_TABLE = [qRgb(i, i, i) for i in range(256)]
 
@@ -951,22 +951,24 @@ class MainWindow(QMainWindow):
     def _on_timer(self) -> None:
         t = self.sim.get_time()  # simulation time
 
+        # one DNS step per timer tick
+        self.sim.step(self._update_intervall, run_next_dt=True)
+
+        # Count frames since the last GUI update
+        self._status_update_counter += 1
+
         if self._first_time:
             # y = self.y0 + self.A * math.sin(2.0 * math.pi * self.f_hz * t)
             theta = 2.0 * math.pi * self.f_hz * t
             x = self.cx + self.R * math.cos(theta)
-            y = self.cy + self.R * math.sin(theta)
+            y = self.cy - self.R * math.sin(theta)
 
             self.sim.set_body_force(int(x), int(y),
                                     amp=DEFAULT_FORCE_AMP,
                                     sigma=DEFAULT_FORCE_SIGMA,
                                     active=True)
 
-        # one DNS step per timer tick
-        self.sim.step(self._update_intervall, run_next_dt=True)
 
-        # Count frames since the last GUI update
-        self._status_update_counter += 1
 
         if self._status_update_counter >= self._update_intervall:
             pixels = self.sim.get_frame_pixels()
