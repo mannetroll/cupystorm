@@ -51,7 +51,7 @@ class TurboLogicMixin:
         self._rng = np.random.default_rng(1)
 
         # circle forcing params
-        self.f_hz = 0.02
+        self.f_hz = 0.1
         self.cx = 0.5 * (self.sim.px - 1)
         self.cy = 0.5 * (self.sim.py - 1)
         self.R = self.sim.py / 4.0
