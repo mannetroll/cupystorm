@@ -275,7 +275,7 @@ COLOR_MAPS = {
     "RdBu": RDBU_LUT,
 }
 
-DEFAULT_CMAP_NAME = "Inferno"
+DEFAULT_CMAP_NAME = "Ocean"
 
 # ----------------------------------------------------------------------
 # Option A: Qt Indexed8 + palette tables (avoid expanding to RGB in NumPy)
@@ -365,7 +365,7 @@ class MainWindow(QMainWindow):
         #   "circle": circle stirring (auto force)
         #   "rain"  : random body-force kicks (auto force)
         #   "mouse" : mouse drag force only (no auto force)
-        self._force_mode = "circle"
+        self._force_mode = "rain"
 
         # --- central image label ---
         self.image_label = ClickableLabel()
@@ -594,14 +594,10 @@ class MainWindow(QMainWindow):
         self.cy = 0.5 * (self.sim.py - 1)
         self.R = self.sim.py / 4.0
 
-        # make sure forcing is enabled
-        x = self.cx + self.R * math.cos(0)
-        y = self.cy + self.R * math.sin(0)
-
-        self.sim.set_body_force(int(x), int(y),
-                                amp=DEFAULT_FORCE_AMP,
-                                sigma=DEFAULT_FORCE_SIGMA,
-                                active=True)
+        # start in Rain mode: reset injector schedule (no constant force)
+        self._injector_reset()
+        self.sim.state.force_active = False
+        self.sim.state.force_dirty = True
 
     # ------------------------------------------------------------------
     def _display_scale(self) -> float:
