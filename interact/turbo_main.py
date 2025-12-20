@@ -7,7 +7,7 @@ import sys
 import time
 from typing import Optional
 
-from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths, Signal, QEvent
+from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths, Signal
 from PySide6.QtGui import QIcon, QImage, QPixmap, QFontDatabase, qRgb, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QApplication,
@@ -361,6 +361,13 @@ class MainWindow(QMainWindow):
         self.sim = sim
         self.current_cmap_name = DEFAULT_CMAP_NAME
 
+        # Force/init mode selector
+        #   "pao"   : PAO spectrum init (no auto force)
+        #   "circle": circle stirring (auto force)
+        #   "rain"  : random body-force kicks (auto force)
+        #   "mouse" : mouse drag force only (no auto force)
+        self._force_mode = "circle" if first_time else "mouse"
+
         # --- central image label ---
         self.image_label = ClickableLabel()
         self.image_label.setSizePolicy(
@@ -377,32 +384,6 @@ class MainWindow(QMainWindow):
         self.image_label.pressed.connect(self.on_image_pressed)
         self.image_label.moved.connect(self.on_image_moved)
         self.image_label.released.connect(self.on_image_released)
-
-
-        # --- init mode buttons (click to re-initialize) ---
-        self.pao_init_button = QPushButton("PAO")
-        self.pao_init_button.setToolTip("Initilize with PAO spectrum")
-
-        self.circle_init_button = QPushButton("Cirle")
-        self.circle_init_button.setToolTip("Initialize with circle stirring")
-
-        self.rain_init_button = QPushButton("Rain")
-        self.rain_init_button.setToolTip("Initialize with random body force")
-
-        self.mouse_init_button = QPushButton("Mouse")
-        self.mouse_init_button.setToolTip("Initialize with mouse force")
-
-        self.pao_init_button.setFixedHeight(24)
-        self.circle_init_button.setFixedHeight(24)
-        self.rain_init_button.setFixedHeight(24)
-        self.mouse_init_button.setFixedHeight(24)
-
-        self.pao_init_button.clicked.connect(lambda: self._switch_init_mode("pao"))
-        self.circle_init_button.clicked.connect(lambda: self._switch_init_mode("circle"))
-        self.rain_init_button.clicked.connect(lambda: self._switch_init_mode("rain"))
-        self.mouse_init_button.clicked.connect(lambda: self._switch_init_mode("mouse"))
-
-        self._init_mode = "circle" if self._first_time else "mouse"
 
         # --- small icon buttons ---
         style = QApplication.style()
@@ -441,6 +422,19 @@ class MainWindow(QMainWindow):
         self.folder_button.setToolTip("Save files")
         self.folder_button.setFixedSize(28, 28)
         self.folder_button.setIconSize(QSize(14, 14))
+
+        # --- init/force mode buttons (row above image) ---
+        self.init_pao_button = QPushButton("PAO")
+        self.init_pao_button.setToolTip("Initilize with PAO spectrum")
+
+        self.init_circle_button = QPushButton("Cirle")
+        self.init_circle_button.setToolTip("Initialize with circle stirring")
+
+        self.init_rain_button = QPushButton("Rain")
+        self.init_rain_button.setToolTip("Initialize with random body force")
+
+        self.init_mouse_button = QPushButton("Mouse")
+        self.init_mouse_button.setToolTip("Initialize with mouse force")
 
         self._status_update_counter = 0
         self._update_intervall = 20
@@ -521,6 +515,11 @@ class MainWindow(QMainWindow):
         self.reset_button.clicked.connect(self.on_reset_clicked)  # type: ignore[attr-defined]
         self.save_button.clicked.connect(self.on_save_clicked)  # type: ignore[attr-defined]
         self.folder_button.clicked.connect(self.on_folder_clicked)  # type: ignore[attr-defined]
+
+        self.init_pao_button.clicked.connect(self.on_init_pao_clicked)  # type: ignore[attr-defined]
+        self.init_circle_button.clicked.connect(self.on_init_circle_clicked)  # type: ignore[attr-defined]
+        self.init_rain_button.clicked.connect(self.on_init_rain_clicked)  # type: ignore[attr-defined]
+        self.init_mouse_button.clicked.connect(self.on_init_mouse_clicked)  # type: ignore[attr-defined]
         self.variable_combo.currentIndexChanged.connect(self.on_variable_changed)  # type: ignore[attr-defined]
         self.cmap_combo.currentTextChanged.connect(self.on_cmap_changed)  # type: ignore[attr-defined]
         self.n_combo.currentTextChanged.connect(self.on_n_changed)  # type: ignore[attr-defined]
@@ -549,7 +548,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"2D Turbulence {title_backend} © Mannetroll")
         disp_w, disp_h = self._display_size_px()
         win_w = disp_w + 40
-        win_h = disp_h + 150
+        win_h = disp_h + 120
         self.resize(win_w, win_h)
 
         # Keep-alive buffers for QImage wrappers
@@ -572,6 +571,17 @@ class MainWindow(QMainWindow):
         self.on_update_changed(self.update_combo.currentText())
         self.on_start_clicked()  # auto-start simulation immediately
 
+        # --- random small-vortex injector ("Rain" mode) ---
+        self._inj_enabled = True
+        self._inj_f_hz = 2.0  # injections per SIM-second
+        self._inj_sigma = 4.0  # pixels
+        self._inj_amp0 = DEFAULT_FORCE_AMP
+        self._inj_duration_steps = 1  # impulse
+        self._inj_next_t = self.sim.get_time()
+        self._inj_off_iter = -1
+        self._inj_last = None  # (x,y,amp,sigma)
+        self._rng = np.random.default_rng(1)
+
         '''
         self.force_x = self.sim.px // 10
         self.y_min = self.sim.py // 4
@@ -581,22 +591,19 @@ class MainWindow(QMainWindow):
         '''
 
         self.f_hz = 0.02  # 0.02 Hz
+        self.cx = 0.5 * (self.sim.px - 1)
+        self.cy = 0.5 * (self.sim.py - 1)
+        self.R = self.sim.py / 4.0
 
-        # --- random small-vortex injector (Rain mode) ---
-        self._inj_enabled = False
-        self._inj_f_hz = 2.0  # injections per SIM-second (try 1..10)
-        self._inj_sigma = 4.0  # small vortices (pixels)
-        self._inj_amp0 = DEFAULT_FORCE_AMP
-        self._inj_duration_steps = 1  # 1 step = impulse
-        self._inj_next_t = self.sim.get_time()
-        self._inj_off_iter = -1
+        # make sure forcing is enabled
+        x = self.cx + self.R * math.cos(0)
+        y = self.cy + self.R * math.sin(0)
 
-        self._inj_last = None  # (x,y,amp,sigma)
-        self._rng = np.random.default_rng(1)
-
-        # init forcing based on selected mode
-        self._apply_init_mode()
-
+        if self._first_time and self._force_mode == "circle":
+            self.sim.set_body_force(int(x), int(y),
+                                    amp=DEFAULT_FORCE_AMP,
+                                    sigma=DEFAULT_FORCE_SIGMA,
+                                    active=True)
 
     # ------------------------------------------------------------------
     def _display_scale(self) -> float:
@@ -655,12 +662,13 @@ class MainWindow(QMainWindow):
         central = QWidget()
         main = QVBoxLayout(central)
 
-        init_row = QHBoxLayout()
-        init_row.addWidget(self.pao_init_button)
-        init_row.addWidget(self.circle_init_button)
-        init_row.addWidget(self.rain_init_button)
-        init_row.addWidget(self.mouse_init_button)
-        main.addLayout(init_row)
+        # Init/force mode row (must be above the image)
+        row0 = QHBoxLayout()
+        row0.addWidget(self.init_pao_button)
+        row0.addWidget(self.init_circle_button)
+        row0.addWidget(self.init_rain_button)
+        row0.addWidget(self.init_mouse_button)
+        main.addLayout(row0)
 
         main.addWidget(self.image_label)
 
@@ -695,108 +703,6 @@ class MainWindow(QMainWindow):
             main.addLayout(row2)
 
         self.setCentralWidget(central)
-
-
-    # ------------------------------------------------------------------
-
-    def _circle_recompute(self) -> None:
-        self.cx = 0.5 * (self.sim.px - 1)
-        self.cy = 0.5 * (self.sim.py - 1)
-        self.R = self.sim.py / 4.0
-
-    def _apply_init_mode(self) -> None:
-        self._circle_recompute()
-
-        if self._init_mode == "circle":
-            self._first_time = True
-            self._inj_enabled = False
-
-            x = self.cx + self.R * math.cos(0)
-            y = self.cy + self.R * math.sin(0)
-
-            self.sim.set_body_force(
-                int(x),
-                int(y),
-                amp=DEFAULT_FORCE_AMP,
-                sigma=DEFAULT_FORCE_SIGMA,
-                active=True,
-            )
-            return
-
-        if self._init_mode == "rain":
-            self._first_time = False
-            self._inj_enabled = True
-            self._injector_reset()
-            self.sim.set_body_force(
-                0,
-                0,
-                amp=DEFAULT_FORCE_AMP,
-                sigma=DEFAULT_FORCE_SIGMA,
-                active=False,
-            )
-            return
-
-        # "mouse" and "pao" are identical at init: no continuous forcing
-        self._first_time = False
-        self._inj_enabled = False
-        self.sim.set_body_force(
-            0,
-            0,
-            amp=DEFAULT_FORCE_AMP,
-            sigma=DEFAULT_FORCE_SIGMA,
-            active=False,
-        )
-
-    def _switch_init_mode(self, mode: str) -> None:
-        if self._init_mode == mode:
-            return
-
-        self._init_mode = mode
-
-        self.on_stop_clicked()
-        self._force_dragging = False
-        self._force_last_xy = None
-
-        self.sim.reset_field()
-        self._apply_init_mode()
-
-        self._update_image(self.sim.get_frame_pixels())
-        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
-
-        self.on_start_clicked()
-
-    def _injector_reset(self) -> None:
-        # call this after reset_field(), set_N(), etc.
-        self._inj_next_t = self.sim.get_time()
-        self._inj_off_iter = -1
-        self._inj_last = None
-
-    def _injector_maybe_apply(self) -> None:
-        if not self._inj_enabled:
-            return
-
-        t = self.sim.get_time()
-        it = self.sim.get_iteration()
-
-        # turn OFF after the impulse has lasted long enough
-        if self.sim.state.force_active and it >= self._inj_off_iter and self._inj_last is not None:
-            x, y, amp, sigma = self._inj_last
-            self.sim.set_body_force(x, y, amp=amp, sigma=sigma, active=False)
-            return
-
-        # start a new kick only if no force is currently active
-        if (not self.sim.state.force_active) and (t >= self._inj_next_t):
-            x = int(self._rng.integers(0, self.sim.px))
-            y = int(self._rng.integers(0, self.sim.py))
-
-            # random sign -> avoids always injecting same circulation
-            amp = float(self._inj_amp0) * (1.0 if self._rng.random() < 0.5 else -1.0)
-            sigma = float(self._inj_sigma)
-
-            self.sim.set_body_force(x, y, amp=amp, sigma=sigma, active=True)
-            self._inj_last = (x, y, amp, sigma)
-            self._inj_off_iter = it + int(self._inj_duration_steps)
-            self._inj_next_t = t + 1.0 / float(self._inj_f_hz)
 
     def _upscale_downscale_u8(self, pix: np.ndarray) -> np.ndarray:
         """
@@ -924,11 +830,105 @@ class MainWindow(QMainWindow):
     def on_reset_clicked(self) -> None:
         self.on_stop_clicked()
         self.sim.reset_field()
-        self._apply_init_mode()
         self._update_image(self.sim.get_frame_pixels())
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
         self.on_start_clicked()
         self._first_time = False
+
+    def _post_init_nextdt(self) -> None:
+        S = self.sim.state
+
+        dns_all.dns_step2a(S)
+        CFLM = dns_all.compute_cflm(S)
+
+        if CFLM == 0.0:
+            S.dt = 0.01
+        else:
+            S.dt = S.cflnum / (CFLM * math.pi)
+
+        S.t = 0.0
+        S.cn = 1.0
+        S.cnm1 = 0.0
+
+        self.sim.t = float(S.t)
+        self.sim.dt = float(S.dt)
+        self.sim.cn = float(S.cn)
+        self.sim.iteration = 0
+
+    def _reset_gui_after_init(self) -> None:
+        self._sim_start_time = time.time()
+        self._sim_start_iter = self.sim.get_iteration()
+        self._status_update_counter = 0
+        self._update_image(self.sim.get_frame_pixels())
+        self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
+
+    def on_init_pao_clicked(self) -> None:
+        was_running = self.timer.isActive()
+        self.on_stop_clicked()
+
+        self.sim.reset_field()
+        dns_all.dns_pao_host_init(self.sim.state)
+        self._post_init_nextdt()
+
+        self.sim.state.force_active = False
+        self.sim.state.force_dirty = True
+
+        self._force_mode = "pao"
+        self._first_time = False
+        self._reset_gui_after_init()
+        if was_running:
+            self.on_start_clicked()
+
+    def on_init_circle_clicked(self) -> None:
+        was_running = self.timer.isActive()
+        self.on_stop_clicked()
+
+        self.sim.reset_field()
+
+        self.cx = 0.5 * (self.sim.px - 1)
+        self.cy = 0.5 * (self.sim.py - 1)
+        self.R = self.sim.py / 4.0
+
+        x = self.cx + self.R * math.cos(0)
+        y = self.cy + self.R * math.sin(0)
+
+        self.sim.set_body_force(int(x), int(y),
+                                amp=DEFAULT_FORCE_AMP,
+                                sigma=DEFAULT_FORCE_SIGMA,
+                                active=True)
+
+        self._force_mode = "circle"
+        self._first_time = True
+        self._reset_gui_after_init()
+        if was_running:
+            self.on_start_clicked()
+
+    def on_init_rain_clicked(self) -> None:
+        was_running = self.timer.isActive()
+        self.on_stop_clicked()
+
+        self.sim.reset_field()
+        self._injector_reset()
+
+        self._force_mode = "rain"
+        self._first_time = True
+        self._reset_gui_after_init()
+        if was_running:
+            self.on_start_clicked()
+
+    def on_init_mouse_clicked(self) -> None:
+        was_running = self.timer.isActive()
+        self.on_stop_clicked()
+
+        self.sim.reset_field()
+        self.sim.state.force_active = False
+        self.sim.state.force_dirty = True
+
+        self._force_mode = "mouse"
+        self._first_time = False
+        self._reset_gui_after_init()
+        if was_running:
+            self.on_start_clicked()
 
     @staticmethod
     def sci_no_plus(x, decimals=0):
@@ -1023,7 +1023,6 @@ class MainWindow(QMainWindow):
     def on_n_changed(self, value: str) -> None:
         N = int(value)
         self.sim.set_N(N)
-        self._apply_init_mode()
 
         # 1) Update the image first
         self._update_image(self.sim.get_frame_pixels())
@@ -1031,7 +1030,7 @@ class MainWindow(QMainWindow):
         # 2) Compute new geometry from intended display size (NOT pixmap)
         disp_w, disp_h = self._display_size_px()
         new_w = disp_w + 40
-        new_h = disp_h + 150
+        new_h = disp_h + 120
 
         print("Resize to:", new_w, new_h)
 
@@ -1065,7 +1064,6 @@ class MainWindow(QMainWindow):
     def on_re_changed(self, value: str) -> None:
         self.sim.re = float(value)
         self.sim.reset_field()
-        self._apply_init_mode()
         self._sim_start_time = time.time()
         self._sim_start_iter = self.sim.get_iteration()
         self._update_image(self.sim.get_frame_pixels())
@@ -1073,7 +1071,6 @@ class MainWindow(QMainWindow):
     def on_k0_changed(self, value: str) -> None:
         self.sim.k0 = float(value)
         self.sim.reset_field()
-        self._apply_init_mode()
         self._sim_start_time = time.time()
         self._sim_start_iter = self.sim.get_iteration()
         self._update_image(self.sim.get_frame_pixels())
@@ -1081,7 +1078,6 @@ class MainWindow(QMainWindow):
     def on_cfl_changed(self, value: str) -> None:
         self.sim.cfl = float(value)
         self.sim.reset_field()
-        self._apply_init_mode()
         self._sim_start_time = time.time()
         self._sim_start_iter = self.sim.get_iteration()
         self._update_image(self.sim.get_frame_pixels())
@@ -1091,6 +1087,35 @@ class MainWindow(QMainWindow):
 
     def on_update_changed(self, value: str) -> None:
         self._update_intervall = int(float(value))
+
+    def _injector_reset(self) -> None:
+        self._inj_next_t = self.sim.get_time()
+        self._inj_off_iter = -1
+        self._inj_last = None
+
+    def _injector_maybe_apply(self) -> None:
+        if not self._inj_enabled:
+            return
+
+        t = self.sim.get_time()
+        it = self.sim.get_iteration()
+
+        if self.sim.state.force_active and it >= self._inj_off_iter and self._inj_last is not None:
+            x, y, amp, sigma = self._inj_last
+            self.sim.set_body_force(x, y, amp=amp, sigma=sigma, active=False)
+            return
+
+        if (not self.sim.state.force_active) and (t >= self._inj_next_t):
+            x = int(self._rng.integers(0, self.sim.px))
+            y = int(self._rng.integers(0, self.sim.py))
+
+            amp = float(self._inj_amp0) * (1.0 if self._rng.random() < 0.5 else -1.0)
+            sigma = float(self._inj_sigma)
+
+            self.sim.set_body_force(x, y, amp=amp, sigma=sigma, active=True)
+            self._inj_last = (x, y, amp, sigma)
+            self._inj_off_iter = it + int(self._inj_duration_steps)
+            self._inj_next_t = t + 1.0 / float(self._inj_f_hz)
 
     # ------------------------------------------------------------------
     def _on_timer(self) -> None:
@@ -1103,18 +1128,17 @@ class MainWindow(QMainWindow):
         self._status_update_counter += 1
 
         if self._first_time:
-            # y = self.y0 + self.A * math.sin(2.0 * math.pi * self.f_hz * t)
-            theta = 2.0 * math.pi * self.f_hz * t
-            x = self.cx + self.R * math.cos(theta)
-            y = self.cy - self.R * math.sin(theta)
+            if self._force_mode == "circle":
+                theta = 2.0 * math.pi * self.f_hz * t
+                x = self.cx + self.R * math.cos(theta)
+                y = self.cy - self.R * math.sin(theta)
 
-            self.sim.set_body_force(int(x), int(y),
-                                    amp=DEFAULT_FORCE_AMP,
-                                    sigma=DEFAULT_FORCE_SIGMA,
-                                    active=True)
-
-        if self._init_mode == "rain":
-            self._injector_maybe_apply()
+                self.sim.set_body_force(int(x), int(y),
+                                        amp=DEFAULT_FORCE_AMP,
+                                        sigma=DEFAULT_FORCE_SIGMA,
+                                        active=True)
+            elif self._force_mode == "rain":
+                self._injector_maybe_apply()
 
         if self._status_update_counter >= self._update_intervall:
             pixels = self.sim.get_frame_pixels()
@@ -1140,7 +1164,6 @@ class MainWindow(QMainWindow):
         if self.sim.get_iteration() >= self.sim.max_steps:
             if self.auto_reset_checkbox.isChecked():
                 self.sim.reset_field()
-                self._apply_init_mode()
                 self._sim_start_time = time.time()
                 self._sim_start_iter = self.sim.get_iteration()
             else:
@@ -1348,16 +1371,22 @@ class MainWindow(QMainWindow):
         )
 
     def on_image_pressed(self, lx: int, ly: int) -> None:
+        if self._force_mode != "mouse":
+            return
         self._force_dragging = True
         self.image_label.grabMouse()
         self._apply_force_from_label_xy(lx, ly, active=True)
 
     def on_image_moved(self, lx: int, ly: int) -> None:
+        if self._force_mode != "mouse":
+            return
         if not self._force_dragging:
             return
         self._apply_force_from_label_xy(lx, ly, active=True)
 
     def on_image_released(self, lx: int, ly: int) -> None:
+        if self._force_mode != "mouse":
+            return
         if not self._force_dragging:
             return
         self._force_dragging = False
