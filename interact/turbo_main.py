@@ -3,6 +3,7 @@ import colorsys
 import os
 import sys
 import time
+import math
 from typing import Optional
 
 from pathlib import Path
@@ -27,7 +28,6 @@ import numpy as np
 
 from interact import turbo_simulator as dns_all
 from interact.turbo_wrapper import DnsSimulator
-
 
 # Simple helper: build a 256x3 uint8 LUT from color stops in 0..1
 # stops: list of (pos, (r,g,b)) with pos in [0,1], r,g,b in [0,255]
@@ -353,9 +353,10 @@ class ClickableLabel(QLabel):
         super().mouseReleaseEvent(event)
 
 class MainWindow(QMainWindow):
-    def __init__(self, sim: DnsSimulator) -> None:
+    def __init__(self, sim: DnsSimulator, first_time: bool = False) -> None:
         super().__init__()
 
+        self._first_time = first_time
         self.sim = sim
         self.current_cmap_name = DEFAULT_CMAP_NAME
 
@@ -543,6 +544,29 @@ class MainWindow(QMainWindow):
         self.on_steps_changed(self.steps_combo.currentText())
         self.on_update_changed(self.update_combo.currentText())
         self.on_start_clicked()  # auto-start simulation immediately
+
+        '''
+        self.force_x = self.sim.px // 10
+        self.y_min = self.sim.py // 4
+        self.y_max = (3 * self.sim.py) // 4
+        self.y0 = 0.5 * (self.y_min + self.y_max)
+        self.A = 0.5 * (self.y_max - self.y_min)
+        '''
+
+        self.f_hz = 0.02  # 0.02 Hz
+        self.cx = 0.5 * (self.sim.px - 1)
+        self.cy = 0.5 * (self.sim.py - 1)
+        self.R = self.sim.py / 4.0
+
+        # make sure forcing is enabled
+        x = self.cx + self.R * math.cos(0)
+        y = self.cy + self.R * math.sin(0)
+
+        if self._first_time:
+            self.sim.set_body_force(int(x), int(y),
+                                    amp=DEFAULT_FORCE_AMP,
+                                    sigma=DEFAULT_FORCE_SIGMA,
+                                    active=True)
 
     # ------------------------------------------------------------------
     def _display_scale(self) -> float:
@@ -763,6 +787,7 @@ class MainWindow(QMainWindow):
         self._update_image(self.sim.get_frame_pixels())
         self._update_status(self.sim.get_time(), self.sim.get_iteration(), None)
         self.on_start_clicked()
+        self._first_time = False
 
     @staticmethod
     def sci_no_plus(x, decimals=0):
@@ -924,6 +949,19 @@ class MainWindow(QMainWindow):
 
     # ------------------------------------------------------------------
     def _on_timer(self) -> None:
+        t = self.sim.get_time()  # simulation time
+
+        if self._first_time:
+            # y = self.y0 + self.A * math.sin(2.0 * math.pi * self.f_hz * t)
+            theta = 2.0 * math.pi * self.f_hz * t
+            x = self.cx + self.R * math.cos(theta)
+            y = self.cy + self.R * math.sin(theta)
+
+            self.sim.set_body_force(int(x), int(y),
+                                    amp=DEFAULT_FORCE_AMP,
+                                    sigma=DEFAULT_FORCE_SIGMA,
+                                    active=True)
+
         # one DNS step per timer tick
         self.sim.step(self._update_intervall, run_next_dt=True)
 
@@ -1194,10 +1232,9 @@ def main() -> None:
     icon_path = Path(__file__).with_name("interact.icns")
     icon = QIcon(str(icon_path))
     app.setWindowIcon(icon)
-
     sim = DnsSimulator(n=192)
-    sim.step(1, run_next_dt=True)
-    window = MainWindow(sim)
+    sim.step(1)
+    window = MainWindow(sim, first_time = True)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
     g.moveCenter(screen.center())
