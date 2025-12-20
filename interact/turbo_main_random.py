@@ -1,13 +1,11 @@
 # turbo_main_random.py
 import colorsys
 import os
+from pathlib import Path
 import sys
 import time
-import math
-import numpy as np
 from typing import Optional
 
-from pathlib import Path
 from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths, Signal
 from PySide6.QtGui import QIcon, QImage, QPixmap, QFontDatabase, qRgb, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
@@ -25,9 +23,11 @@ from PySide6.QtWidgets import (
     QStyle,
     QLineEdit,
 )
+import numpy as np
 
 from interact import turbo_simulator as dns_all
 from interact.turbo_wrapper import DnsSimulator
+
 
 # Simple helper: build a 256x3 uint8 LUT from color stops in 0..1
 # stops: list of (pos, (r,g,b)) with pos in [0,1], r,g,b in [0,255]
@@ -322,11 +322,10 @@ def _setup_shortcuts(self):
     ))
 
 
-
 # --- Replace ClickableLabel with this version ---
 
 class ClickableLabel(QLabel):
-    clicked = Signal(int, int)      # kept (if you still want single-click elsewhere)
+    clicked = Signal(int, int)  # kept (if you still want single-click elsewhere)
     pressed = Signal(int, int)
     moved = Signal(int, int)
     released = Signal(int, int)
@@ -351,6 +350,7 @@ class ClickableLabel(QLabel):
             p = event.position()
             self.released.emit(int(p.x()), int(p.y()))
         super().mouseReleaseEvent(event)
+
 
 class MainWindow(QMainWindow):
     def __init__(self, sim: DnsSimulator, first_time: bool = False) -> None:
@@ -949,7 +949,6 @@ class MainWindow(QMainWindow):
         if self._first_time:
             self._injector_maybe_apply()
 
-
         if self._status_update_counter >= self._update_intervall:
             pixels = self.sim.get_frame_pixels()
             self._update_image(pixels)
@@ -1122,7 +1121,7 @@ class MainWindow(QMainWindow):
 
         super().keyPressEvent(event)
 
-# --- Add these helpers + handlers inside MainWindow (replace your on_image_clicked) ---
+    # --- Add these helpers + handlers inside MainWindow (replace your on_image_clicked) ---
 
     def _map_label_xy_to_sim_xy(self, lx: int, ly: int) -> Optional[tuple[int, int]]:
         pix = self.image_label.pixmap()
@@ -1152,7 +1151,7 @@ class MainWindow(QMainWindow):
             x //= up
             y //= up
         elif scale > 1.0:
-            s = int(round(scale))         # 2, 4, 6
+            s = int(round(scale))  # 2, 4, 6
             x *= s
             y *= s
 
@@ -1240,6 +1239,7 @@ class MainWindow(QMainWindow):
             self._inj_off_iter = it + int(self._inj_duration_steps)
             self._inj_next_t = t + 1.0 / float(self._inj_f_hz)
 
+
 # ----------------------------------------------------------------------
 def main() -> None:
     app = QApplication(sys.argv)
@@ -1249,7 +1249,7 @@ def main() -> None:
     app.setWindowIcon(icon)
     sim = DnsSimulator(n=192)
     sim.step(1)
-    window = MainWindow(sim, first_time = True)
+    window = MainWindow(sim, first_time=True)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
     g.moveCenter(screen.center())
