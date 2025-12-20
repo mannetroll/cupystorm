@@ -1196,6 +1196,7 @@ def main() -> None:
     app.setWindowIcon(icon)
 
     sim = DnsSimulator(n=192)
+    sim.step(1, run_next_dt=True)
     window = MainWindow(sim)
     screen = app.primaryScreen().availableGeometry()
     g = window.geometry()
