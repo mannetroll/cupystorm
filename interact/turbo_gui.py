@@ -328,7 +328,11 @@ class MainWindow(QMainWindow, TurboLogicMixin):
 
     # ------------------------------------------------------------------
     def _display_scale(self) -> float:
+        """
+        Must match _upscale_downscale_u8() scale logic.
+        """
         N = self.sim.N
+
         if N <= 128:
             return 0.25
         if N <= 256:
@@ -339,7 +343,10 @@ class MainWindow(QMainWindow, TurboLogicMixin):
             return 2.0
         if N <= 3072:
             return 4.0
-        return 6.0
+        if N <= 4096:
+            return 6.0
+        else:
+            return 9.0
 
     def _display_size_px(self) -> tuple[int, int]:
         scale = self._display_scale()
@@ -463,22 +470,16 @@ class MainWindow(QMainWindow, TurboLogicMixin):
     def _update_status(self, t: float, it: int, fps: Optional[float]) -> None:
         fps_str = f"{fps:4.1f}" if fps is not None else " N/a"
 
-        N = self.sim.N
-        if N < 768:
-            dpp = 100
-        elif N <= 1024:
-            dpp = 50
-        elif N <= 3072:
-            dpp = 25
-        else:
-            dpp = 17
+        # DPP = Display Pixel Percentage
+        dpp = 100//self._display_scale()
 
         elapsed_min = (time.time() - self._sim_start_time) / 60.0
         visc = float(self.sim.state.visc)
+        dt = float(self.sim.state.dt)
 
         txt = (
-            f"FPS: {fps_str} | Iter: {it:5d} | T: {t:6.3f} "
-            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:12.10f}"
+            f"FPS: {fps_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
+            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:14.12f}"
         )
         self.status.showMessage(txt)
 
