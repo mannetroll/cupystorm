@@ -1,19 +1,64 @@
-# interact — 2D Turbulence Simulation (SciPy / CuPy)
+# 2D Turbulence Simulation (SciPy / CuPy)
 
-`interact` is a Direct Numerical Simulation (DNS) code for 
-**2D Homogeneous Turbulence**
+A Direct Numerical Simulation (DNS) code for **2D homogeneous incompressible turbulence**
 
 It supports:
 
-- **SciPy** for CPU runs
+- **SciPy / NumPy** for CPU runs
 - **CuPy** (optional) for GPU acceleration on CUDA devices (e.g. RTX 3090)
 
-The solver contains:
+### DNS solver
+The solver includes:
 
-- PAO-style random-field initialization
-- 3/2 de-aliasing in spectral space
-- Crank–Nicolson time integration
-- CFL-based adaptive time-stepping
+- **PAO-style random-field initialization**
+- **3/2 de-aliasing** in spectral space
+- **Crank–Nicolson** time integration
+- **CFL-based adaptive time stepping** (Δt updated from the current flow state)
+
+### Interactive GUI (PySide6)
+Run an interactive window that:
+
+- Displays the flow field as a live image (fast `Indexed8` palette rendering)
+- Lets you switch displayed variable:
+  - **U**, **V** (velocity components)
+  - **K** (kinetic energy)
+  - **Ω** (vorticity)
+  - **φ** (stream function)
+- Lets you switch **colormap** (several built-in palettes)
+- Lets you change simulation parameters on the fly:
+  - Grid size **N**
+  - Reynolds number **Re**
+  - Initial spectrum peak **K0**
+  - CFL number **CFL**
+  - Max steps / auto-reset limit
+  - GUI update interval (how often to refresh the display)
+- Includes force/initialization modes:
+  - **PAO**: PAO spectrum init (no continuous forcing)
+  - **Circle**: a forcing point moves on a circular trajectory (continuous forcing)
+  - **Rain**: random “kick” forcing events (good for sustained turbulence)
+  - **Mouse**: apply forcing by click/drag in the image
+
+### Keyboard shortcuts
+Single-key shortcuts (application-wide) for fast control:
+
+- **V**: cycle variable
+- **C**: cycle colormap
+- **N**: cycle grid size
+- **R**: cycle Reynolds number
+- **K**: cycle K0
+- **L**: cycle CFL
+- **S**: cycle max steps
+- **U**: cycle update interval
+
+### Saving / exporting
+From the GUI you can:
+
+- **Save the current frame** as a PNG image
+- **Dump full-resolution fields** to a folder as PGM images:
+  - u-velocity, v-velocity, kinetic energy, vorticity
+
+### Display scaling
+To keep the GUI responsive for large grids, the displayed image is automatically upscaled/downscaled depending on `N`. The window is resized accordingly when you change `N`.
 
 ## Installation
 
@@ -21,8 +66,8 @@ The solver contains:
 
 From the project root:
 
-    $ uv sync
-    $ uv run python -m interact.turbo_main
+    uv sync
+    uv run python -m interact.turbo_main
 
 
 ## The DNS with SciPy (384 x 384)
