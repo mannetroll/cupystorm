@@ -468,7 +468,7 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self.image_label.setPixmap(pix)
 
     def _update_status(self, t: float, it: int, fps: Optional[float]) -> None:
-        fps_str = f"{fps:4.1f}" if fps is not None else " N/a"
+        fps_str = f"{fps:4.1f}" if fps is not None else " N/A"
 
         # DPP = Display Pixel Percentage
         dpp = 100//self._display_scale()
