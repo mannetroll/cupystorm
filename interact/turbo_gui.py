@@ -471,7 +471,7 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         fps_str = f"{fps:4.1f}" if fps is not None else " N/A"
 
         # DPP = Display Pixel Percentage
-        dpp = 100//self._display_scale()
+        dpp = int(100/self._display_scale())
 
         elapsed_min = (time.time() - self._sim_start_time) / 60.0
         visc = float(self.sim.state.visc)
