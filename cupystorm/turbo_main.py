@@ -5,14 +5,14 @@ import sys
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from interact.turbo_gui import MainWindow
-from interact.turbo_wrapper import DnsSimulator
+from cupystorm.turbo_gui import MainWindow
+from cupystorm.turbo_wrapper import DnsSimulator
 
 
 def main() -> None:
     app = QApplication(sys.argv)
 
-    icon_path = Path(__file__).with_name("interact.icns")
+    icon_path = Path(__file__).with_name("cupystorm.icns")
     if icon_path.exists():
         app.setWindowIcon(QIcon(str(icon_path)))
 

@@ -26,14 +26,14 @@ from PySide6.QtWidgets import (
 )
 import numpy as np
 
-from interact.turbo_colors import (
+from cupystorm.turbo_colors import (
     COLOR_MAPS,
     DEFAULT_CMAP_NAME,
     QT_COLOR_TABLES,
     QT_GRAY_TABLE, DISPLAY_NORM_K_STD, DISPLAY_NORM_ENABLED,
 )
-from interact.turbo_logic import TurboLogicMixin
-from interact.turbo_wrapper import DnsSimulator
+from cupystorm.turbo_logic import TurboLogicMixin
+from cupystorm.turbo_wrapper import DnsSimulator
 
 
 def _setup_shortcuts(self) -> None:

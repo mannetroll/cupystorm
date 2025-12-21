@@ -15,8 +15,8 @@ The solver includes:
 - **Crank–Nicolson** time integration
 - **CFL-based adaptive time stepping** (Δt updated from the current flow state)
 
-### Interactive GUI (PySide6)
-Run an interactive window that:
+### cupystormive GUI (PySide6)
+Run an cupystormive window that:
 
 - Displays the flow field as a live image (fast `Indexed8` palette rendering)
 - Lets you switch displayed variable:
@@ -67,17 +67,17 @@ To keep the GUI responsive for large grids, the displayed image is automatically
 From the project root:
 
     uv sync
-    uv run python -m interact.turbo_main
+    uv run python -m cupystorm.turbo_main
 
 
 ## The DNS with SciPy (384 x 384)
 
-![SciPy](https://raw.githubusercontent.com/mannetroll/interact/main/window.png)
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window.png)
 
 
 ### Full CLI
 
-    $ python -m interact.turbo_simulator N Re K0 STEPS CFL BACKEND
+    $ python -m cupystorm.turbo_simulator N Re K0 STEPS CFL BACKEND
 
 Where:
 
@@ -91,10 +91,10 @@ Where:
 Examples:
 
     # CPU run (SciPy with 4 workers)
-    $ python -m interact.turbo_simulator 256 10000 10 1001 0.75 cpu
+    $ python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 cpu
 
     # Auto-select backend (GPU if CuPy + CUDA are available)
-    $ python -m interact.turbo_simulator 256 10000 10 1001 0.75 auto
+    $ python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
 ## Enabling GPU with CuPy (CUDA 13)
@@ -116,23 +116,23 @@ On a CUDA machine (e.g. RTX 3090):
 
 4. Run in GPU mode:
 
-       $ uv run python -m interact.turbo_simulator 256 10000 10 1001 0.75 gpu
+       $ uv run python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 gpu
 
 Or let the backend auto-detect:
 
-       $ uv run python -m interact.turbo_simulator 256 10000 10 1001 0.75 auto
+       $ uv run python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
 ## The DNS with CuPy (4096 x 4096)
 
-![CuPy](https://raw.githubusercontent.com/mannetroll/interact/main/window4096.png)
+![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window4096.png)
 
 
 ## Profiling
 
 ### cProfile (CPU)
 
-    $ python -m cProfile -o turbo_simulator.prof -m interact.turbo_simulator    
+    $ python -m cProfile -o turbo_simulator.prof -m cupystorm.turbo_simulator    
 
 Inspect the results:
 
@@ -161,37 +161,37 @@ Install Scalene:
 
 Run with GUI report:
 
-    $ scalene -m interact.turbo_simulator 256 10000 10 201 0.75 cpu
+    $ scalene -m cupystorm.turbo_simulator 256 10000 10 201 0.75 cpu
 
 
 ### Memory & CPU profiling with Scalene (CLI only)
 
 For a terminal-only summary:
 
-    $ scalene --cli --cpu -m interact.turbo_simulator 256 10000 10 201 0.75 cpu
+    $ scalene --cli --cpu -m cupystorm.turbo_simulator 256 10000 10 201 0.75 cpu
 
 
 ## Project layout (key modules)
 
-- `interact/turbo_main.py`  
+- `cupystorm/turbo_main.py`  
   PyQt6 GUI viewer; displays DNS fields (U, V, ω, kinetic) in real time.
 
-- `interact/turbo_simulator.py`  
+- `cupystorm/turbo_simulator.py`  
   Headless CLI DNS solver:
   - PAO initialization (dns_pao_host_init)
   - FFT helpers (vfft_full_*)
   - STEP2A, STEP2B, STEP3
   - CFL-based time-step control (compute_cflm, next_dt)
 
-- `interact/turbo_wrapper.py`  
+- `cupystorm/turbo_wrapper.py`  
   Thin wrapper for programmatic use.
 
 ## one-liner
 
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
-$ uv cache clean mannetroll-interact
-$ uv run --python 3.13 --with mannetroll-interact==0.1.0 python -m interact.turbo_main
+$ uv cache clean mannetroll-cupystorm
+$ uv run --python 3.13 --with mannetroll-cupystorm==0.1.0 python -m cupystorm.turbo_main
 ```
 
 ## License

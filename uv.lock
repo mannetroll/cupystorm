@@ -224,7 +224,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mannetroll-interact"
+name = "mannetroll-cupystorm"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

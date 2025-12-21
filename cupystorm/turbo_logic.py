@@ -7,9 +7,9 @@ from typing import Optional
 from PySide6.QtCore import QTimer
 import numpy as np
 
-from interact import turbo_simulator as dns_all
-from interact.turbo_colors import DEFAULT_FORCE_AMP, DEFAULT_FORCE_SIGMA
-from interact.turbo_wrapper import DnsSimulator
+from cupystorm import turbo_simulator as dns_all
+from cupystorm.turbo_colors import DEFAULT_FORCE_AMP, DEFAULT_FORCE_SIGMA
+from cupystorm.turbo_wrapper import DnsSimulator
 
 
 class TurboLogicMixin:

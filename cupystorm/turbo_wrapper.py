@@ -5,7 +5,7 @@ from typing import Union
 import numpy as np
 import math
 import os
-from interact import turbo_simulator as dns_all
+from cupystorm import turbo_simulator as dns_all
 from PIL import Image
 
 # --- ONLY: SciPy FFT threading control (CPU) ---
