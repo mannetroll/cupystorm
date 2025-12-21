@@ -263,3 +263,10 @@ QT_COLOR_TABLES = {
 DEFAULT_FORCE_AMP = 0.5
 DEFAULT_FORCE_SIGMA = 12.0
 QT_GRAY_TABLE = [qRgb(i, i, i) for i in range(256)]
+
+# ----------------------------------------------------------------------
+# Display normalization (reduces flicker when the underlying dynamic range
+# changes quickly, e.g. in Rain mode).
+# ----------------------------------------------------------------------
+DISPLAY_NORM_ENABLED = True
+DISPLAY_NORM_K_STD = 2.5          # map [mu - k*sigma, mu + k*sigma] -> [0,255]

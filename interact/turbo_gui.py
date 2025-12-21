@@ -30,7 +30,7 @@ from interact.turbo_colors import (
     COLOR_MAPS,
     DEFAULT_CMAP_NAME,
     QT_COLOR_TABLES,
-    QT_GRAY_TABLE,
+    QT_GRAY_TABLE, DISPLAY_NORM_K_STD, DISPLAY_NORM_ENABLED,
 )
 from interact.turbo_logic import TurboLogicMixin
 from interact.turbo_wrapper import DnsSimulator
@@ -428,10 +428,23 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         if pixels.ndim != 2:
             return
 
+        # Reduce display flicker in Rain mode by using a stable (EMA) mean/std
+        # normalization instead of frame-wise min/max stretching.
+        if DISPLAY_NORM_ENABLED and getattr(self, "_force_mode", "") == "rain":
+            pix_f = pixels.astype(np.float32, copy=False)
+            mu = float(pix_f.mean())
+            sig = float(pix_f.std())
+            if sig < 1.0e-6:
+                sig = 1.0
+
+            k = float(DISPLAY_NORM_K_STD)
+            lo = mu - k * sig
+            hi = mu + k * sig
+            inv = 255.0 / (hi - lo) if (hi - lo) != 0.0 else 0.0
+            pixels = ((pix_f - lo) * inv).round().clip(0.0, 255.0).astype(np.uint8)
+
         pixels = self._upscale_downscale_u8(pixels)
         h, w = pixels.shape
-
-        self._last_pixels_u8 = pixels
 
         qimg = QImage(
             pixels.data,
