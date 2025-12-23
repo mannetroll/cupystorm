@@ -34,8 +34,8 @@ class DnsSimulator:
         self,
         n: int = 128,
         re: float = 100000,
-        k0: float = 15.0,
-        cfl: float = 0.2,
+        k0: float = 10.0,
+        cfl: float = 0.25,
         seed: int = 1,
     ):
         self.N = int(n)
