@@ -27,6 +27,9 @@ class TurboLogicMixin:
     _force_dragging: bool
     _force_last_xy: Optional[tuple[int, int]]
 
+    def _update_force_mode_buttons(self) -> None:
+        pass
+
     def _logic_init_defaults(self) -> None:
         # Force/init mode selector
         #   "pao"   : PAO spectrum init (no auto force)
