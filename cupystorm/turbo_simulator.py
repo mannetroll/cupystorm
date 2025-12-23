@@ -227,13 +227,6 @@ class DnsState:
     seed_init: int = 1
     fft_workers: int = 1
 
-    # Rayleigh / Ekman linear friction (large-scale damping in spectral space)
-    # alpha_k has shape (NZ, NX/2) on the compact spectral grid used for OM2.
-    rayleigh_alpha0: float = 0.0
-    rayleigh_k_cut: float = 0.0
-    rayleigh_p: float = 8.0
-    alpha_k: any = None
-
 
     # Cached FFT module (scipy.fft or cupyx.scipy.fft)
     fft: any = None
@@ -308,6 +301,32 @@ class DnsState:
     force_u_hat_low: any = None
     force_omega_hat: any = None
 
+
+
+
+    # ----------------------------------------------------------
+    # Rayleigh / Ekman large-scale dissipation (linear drag)
+    #   alpha(k) ~ alpha0 for small k, ~0 for large k
+    # ----------------------------------------------------------
+    rayleigh_alpha0: float = 0.0
+    rayleigh_k_cut: float = 4.0
+    rayleigh_p: float = 8.0
+    rayleigh_dirty: bool = True
+    rayleigh_alpha_k: any = None   # float32 (NZ, NX_half)
+
+    # ----------------------------------------------------------
+    # High-k spectral vorticity forcing (band-limited in |k|)
+    # ----------------------------------------------------------
+    highk_active: bool = False
+    highk_amp0: float = 0.5
+    highk_kf1: float = 0.0
+    highk_kf2: float = 0.0
+    highk_hz: float = 2.0
+    highk_next_t: float = 0.0
+    highk_dirty: bool = True
+    highk_mask: any = None         # float32 (NZ, NX_half), 0/1
+    highk_omega_hat: any = None    # complex64 (NZ, NX_half)
+
     def sync(self):
         """For a CuPy backend, force synchronization at convenient checkpoints."""
         if self.backend == "gpu":
@@ -325,9 +344,6 @@ def create_dns_state(
     CFL: float = 0.75,
     backend: Literal["cpu", "gpu", "auto"] = "auto",
     seed: int = 1,
-    rayleigh_alpha0: float = 0.0,
-    rayleigh_k_cut: float = 0.0,
-    rayleigh_p: float = 8.0,
 ) -> DnsState:
     xp = get_xp(backend)
 
@@ -372,9 +388,6 @@ def create_dns_state(
         cflnum=CFL,
         seed_init=int(seed),
         fft_workers=4,
-        rayleigh_alpha0=float(rayleigh_alpha0),
-        rayleigh_k_cut=float(rayleigh_k_cut),
-        rayleigh_p=float(rayleigh_p),
     )
     print(f" workers (CPU): {state.fft_workers}")
 
@@ -440,21 +453,6 @@ def create_dns_state(
     state.step3_GA = (gz * ax).astype(xp.float32, copy=False)
     state.step3_G2mA2 = (gz2 - ax2).astype(xp.float32, copy=False)
 
-    # ----------------------------------------------------------
-    # Rayleigh/Ekman friction mask (large-scale-only damping)
-    #   L(k) = visc*k^2 + alpha(k)
-    # where alpha(k) ~ alpha0 for k<<k_cut and ~0 for k>>k_cut.
-    #
-    # Default alpha0=0 keeps existing behaviour unchanged.
-    # ----------------------------------------------------------
-    if state.rayleigh_alpha0 != 0.0 and state.rayleigh_k_cut > 0.0:
-        k = xp.sqrt(state.step3_K2)
-        mask = xp.float32(1.0) / (xp.float32(1.0) + (k / xp.float32(state.rayleigh_k_cut)) ** xp.float32(state.rayleigh_p))
-        state.alpha_k = (xp.float32(state.rayleigh_alpha0) * mask).astype(xp.float32, copy=False)
-    else:
-        state.alpha_k = xp.zeros_like(state.step3_K2, dtype=xp.float32)
-
-
     if NX_half > 1:
         state.step3_invK2_sub = (xp.float32(1.0) / (state.step3_K2[:, 1:] + xp.float32(1.0e-30))).astype(xp.float32, copy=False)
     else:
@@ -491,6 +489,31 @@ def create_dns_state(
     state.force_uc_full = xp.empty((state.NZ_full, state.NK_full), dtype=xp.complex64)
     state.force_u_hat_low = xp.empty((state.Nbase, state.Nbase // 2), dtype=xp.complex64)
     state.force_omega_hat = xp.zeros((state.Nbase, state.Nbase // 2), dtype=xp.complex64)
+
+
+    # ----------------------------------------------------------
+    # Rayleigh / Ekman drag (large-scale dissipation) defaults
+    # ----------------------------------------------------------
+    state.rayleigh_alpha0 = 0.0
+    state.rayleigh_k_cut = 4.0
+    state.rayleigh_p = 8.0
+    state.rayleigh_dirty = True
+    state.rayleigh_alpha_k = xp.zeros((state.Nbase, state.Nbase // 2), dtype=xp.float32)
+
+    # ----------------------------------------------------------
+    # High-k spectral forcing defaults (band around k ~ N/3)
+    # ----------------------------------------------------------
+    kf = float(state.Nbase) / 3.0
+    state.highk_active = False
+    state.highk_amp0 = 0.5
+    state.highk_kf1 = kf - 2.0
+    state.highk_kf2 = kf + 2.0
+    state.highk_hz = 2.0
+    state.highk_next_t = 0.0
+    state.highk_dirty = True
+    state.highk_mask = xp.zeros((state.Nbase, state.Nbase // 2), dtype=xp.float32)
+    state.highk_omega_hat = xp.zeros((state.Nbase, state.Nbase // 2), dtype=xp.complex64)
+
     return state
 
 # ===============================================================
@@ -1053,6 +1076,64 @@ def _update_force_omega_hat(S: DnsState) -> None:
 
     S.force_dirty = False
 
+
+# ---------------------------------------------------------------
+# Rayleigh / Ekman drag alpha(k) (large-scale dissipation)
+# ---------------------------------------------------------------
+def _update_rayleigh_alpha_k(S: DnsState) -> None:
+    xp = S.xp
+    K2 = S.step3_K2
+    k = xp.sqrt(K2)
+
+    k_cut = xp.float32(S.rayleigh_k_cut)
+    p = xp.float32(S.rayleigh_p)
+    alpha0 = xp.float32(S.rayleigh_alpha0)
+
+    S.rayleigh_alpha_k[...] = alpha0 / (xp.float32(1.0) + (k / k_cut) ** p)
+    S.rayleigh_dirty = False
+
+
+# ---------------------------------------------------------------
+# High-k spectral vorticity forcing (band-limited in |k|)
+# ---------------------------------------------------------------
+def _update_highk_omega_hat(S: DnsState) -> None:
+    xp = S.xp
+
+    NZ = int(S.Nbase)
+    NX_half = int(S.Nbase // 2)
+
+    K2 = S.step3_K2
+    k = xp.sqrt(K2)
+
+    kf1 = xp.float32(S.highk_kf1)
+    kf2 = xp.float32(S.highk_kf2)
+
+    # 0/1 mask in the low-k spectral grid
+    S.highk_mask[...] = (k >= kf1) & (k <= kf2)
+
+    # Random complex phases + radial band mask
+    a = xp.random.standard_normal((NZ, NX_half), dtype=xp.float32)
+    b = xp.random.standard_normal((NZ, NX_half), dtype=xp.float32)
+
+    F = S.highk_omega_hat
+    F.real[...] = a
+    F.imag[...] = b
+    F *= S.highk_mask
+    F *= xp.float32(S.highk_amp0)
+
+    # Enforce real-field Hermitian symmetry in kz
+    nyq = NZ // 2
+    F[0, :] = xp.asarray(xp.real(F[0, :]), dtype=xp.complex64)
+
+    if (NZ % 2) == 0:
+        F[nyq, :] = xp.asarray(xp.real(F[nyq, :]), dtype=xp.complex64)
+        F[nyq + 1 :, :] = xp.conj(F[1:nyq, :][::-1, :])
+    else:
+        F[nyq + 1 :, :] = xp.conj(F[1:nyq + 1, :][::-1, :])
+
+    S.highk_next_t = float(S.t) + 1.0 / float(S.highk_hz)
+    S.highk_dirty = False
+
 def dns_step3(S: DnsState) -> None:
     """
     STEP3 — update spectral vorticity OM2 and non-linear term FNM1,
@@ -1125,21 +1206,35 @@ def dns_step3(S: DnsState) -> None:
             _update_force_omega_hat(S)
         tmp_FN += S.force_omega_hat
 
+    # ---------------------------------------------------------------
+    # High-k spectral forcing (vorticity) (if active)
+    # ---------------------------------------------------------------
+    if S.highk_active:
+        if S.highk_dirty or (S.t >= S.highk_next_t):
+            _update_highk_omega_hat(S)
+        tmp_FN += S.highk_omega_hat
+
 
     # Crank–Nicolson in spectral space (Fortran STEP3), update OM2 in-place
-    # Linear operator: L(k) = visc*k^2 + alpha(k)
-    VT = xp.float32(0.5) * visc * dt
+    # Linear operator: L(k) = visc*k^2 + alpha(k)  (Rayleigh/Ekman drag)
+    VT = xp.float32(0.5) * dt
     ARG = S.step3_ARG                                 # (NZ, NX_half), float32
     DEN = S.step3_DEN                                 # (NZ, NX_half), float32
-    xp.multiply(K2, VT, out=ARG)                      # ARG = 0.5*dt*visc*k^2
 
-    # Add Rayleigh/Ekman friction (large-scale damping) if enabled:
-    # ARG += 0.5*dt*alpha_k
-    if S.rayleigh_alpha0 != 0.0 and S.alpha_k is not None:
-        xp.multiply(S.alpha_k, xp.float32(0.5) * dt, out=DEN)  # temporary
-        ARG += DEN
+    # ARG = visc*K2
+    xp.multiply(K2, visc, out=ARG)
 
-    xp.add(ARG, xp.float32(1.0), out=DEN)             # DEN = 1 + ARG
+    if S.rayleigh_dirty:
+        _update_rayleigh_alpha_k(S)
+
+    # ARG = visc*K2 + alpha(k)
+    ARG += S.rayleigh_alpha_k
+
+    # ARG = 0.5*dt*(visc*K2 + alpha)
+    ARG *= VT
+
+    # DEN = 1 + ARG
+    xp.add(ARG, xp.float32(1.0), out=DEN)
 
     c2 = xp.float32(0.5) * dt * (xp.float32(2.0) + cnm1)
     c3 = -xp.float32(0.5) * dt * cnm1

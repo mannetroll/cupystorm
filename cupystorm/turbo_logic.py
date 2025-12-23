@@ -97,6 +97,62 @@ class TurboLogicMixin:
             self.sim.state.force_active = False
             self.sim.state.force_dirty = True
 
+            # Disable Rayleigh/high-k forcing in plain PAO mode
+            self.sim.rayleigh_alpha0 = 0.0
+            S = self.sim.state
+            S.rayleigh_alpha0 = 0.0
+            S.rayleigh_dirty = True
+            self.sim.highk_active = False
+            S.highk_active = False
+            S.highk_dirty = True
+
+            self._reset_gui_after_init()
+
+        elif self._force_mode == "pao_ekman":
+            self.sim.reset_field()
+            dns_all.dns_pao_host_init(self.sim.state)
+
+            S = self.sim.state
+            S.rayleigh_alpha0 = float(self.sim.rayleigh_alpha0)
+            S.rayleigh_k_cut = float(self.sim.rayleigh_k_cut)
+            S.rayleigh_p = float(self.sim.rayleigh_p)
+            S.rayleigh_dirty = True
+
+            self.sim.highk_active = False
+            S.highk_active = False
+            S.highk_dirty = True
+
+            self._post_init_nextdt()
+
+            S.force_active = False
+            S.force_dirty = True
+
+            self._reset_gui_after_init()
+
+        elif self._force_mode == "highh":
+            self.sim.reset_field()
+            dns_all.dns_pao_host_init(self.sim.state)
+
+            S = self.sim.state
+            S.rayleigh_alpha0 = float(self.sim.rayleigh_alpha0)
+            S.rayleigh_k_cut = float(self.sim.rayleigh_k_cut)
+            S.rayleigh_p = float(self.sim.rayleigh_p)
+            S.rayleigh_dirty = True
+
+            self.sim.highk_active = True
+            S.highk_active = True
+            S.highk_amp0 = float(self.sim.highk_amp0)
+            S.highk_kf1 = float(self.sim.highk_kf1)
+            S.highk_kf2 = float(self.sim.highk_kf2)
+            S.highk_hz = float(self.sim.highk_hz)
+            S.highk_next_t = float(S.t)
+            S.highk_dirty = True
+
+            self._post_init_nextdt()
+
+            S.force_active = False
+            S.force_dirty = True
+
             self._reset_gui_after_init()
 
         elif self._force_mode == "circle":
@@ -176,26 +232,85 @@ class TurboLogicMixin:
         if was_running:
             self.on_start_clicked()
 
-    def on_init_pao_ekman_clicked(self) -> None:
-        # Start PAO + large-scale Rayleigh/Ekman drag in one click.
-        # (Keeps existing PAO button behaviour untouched.)
-        self.on_stop_clicked()
 
-        # Default large-scale drag params (user can tune in code later)
-        self.sim.rayleigh_alpha0 = 0.1
-        self.sim.rayleigh_k_cut = 6.0
-        self.sim.rayleigh_p = 8.0
+
+    def on_init_pao_ekman_clicked(self) -> None:
+        was_running = self.timer.isActive()
+        self.on_stop_clicked()
 
         self.sim.reset_field()
         dns_all.dns_pao_host_init(self.sim.state)
+
+        # Default large-scale drag params (user can tune in code later)
+        self.sim.rayleigh_alpha0 = 0.05
+        self.sim.rayleigh_k_cut = 4.0
+        self.sim.rayleigh_p = 8.0
+
+        S = self.sim.state
+        S.rayleigh_alpha0 = float(self.sim.rayleigh_alpha0)
+        S.rayleigh_k_cut = float(self.sim.rayleigh_k_cut)
+        S.rayleigh_p = float(self.sim.rayleigh_p)
+        S.rayleigh_dirty = True
+
+        # No high-k forcing in this mode
+        self.sim.highk_active = False
+        S.highk_active = False
+        S.highk_dirty = True
+
         self._post_init_nextdt()
 
-        self.sim.state.force_active = False
-        self.sim.state.force_dirty = True
+        S.force_active = False
+        S.force_dirty = True
 
-        self._force_mode = "pao"
+        self._force_mode = "pao_ekman"
         self._reset_gui_after_init()
-        self.on_start_clicked()
+        if was_running:
+            self.on_start_clicked()
+
+    def on_init_highh_clicked(self) -> None:
+        was_running = self.timer.isActive()
+        self.on_stop_clicked()
+
+        self.sim.reset_field()
+        dns_all.dns_pao_host_init(self.sim.state)
+
+        # Default large-scale drag params (user can tune in code later)
+        self.sim.rayleigh_alpha0 = 0.05
+        self.sim.rayleigh_k_cut = 4.0
+        self.sim.rayleigh_p = 8.0
+
+        # High-k forcing defaults (band near k ~ N/3)
+        kf = float(self.sim.N) / 3.0
+        self.sim.highk_active = True
+        self.sim.highk_amp0 = 0.5
+        self.sim.highk_kf1 = kf - 2.0
+        self.sim.highk_kf2 = kf + 2.0
+        self.sim.highk_hz = 2.0
+
+        S = self.sim.state
+        S.rayleigh_alpha0 = float(self.sim.rayleigh_alpha0)
+        S.rayleigh_k_cut = float(self.sim.rayleigh_k_cut)
+        S.rayleigh_p = float(self.sim.rayleigh_p)
+        S.rayleigh_dirty = True
+
+        S.highk_active = True
+        S.highk_amp0 = float(self.sim.highk_amp0)
+        S.highk_kf1 = float(self.sim.highk_kf1)
+        S.highk_kf2 = float(self.sim.highk_kf2)
+        S.highk_hz = float(self.sim.highk_hz)
+        S.highk_next_t = float(S.t)
+        S.highk_dirty = True
+
+        self._post_init_nextdt()
+
+        # No body-force injector in this mode
+        S.force_active = False
+        S.force_dirty = True
+
+        self._force_mode = "highh"
+        self._reset_gui_after_init()
+        if was_running:
+            self.on_start_clicked()
 
     def on_init_circle_clicked(self) -> None:
         was_running = self.timer.isActive()

@@ -182,8 +182,11 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self.init_pao_button = QPushButton("PAO")
         self.init_pao_button.setToolTip("Initilize with PAO spectrum")
 
-        self.init_pao_ekman_button = QPushButton("Ekman/Rayleigh")
-        self.init_pao_ekman_button.setToolTip("Start PAO with large-scale Ekman/Rayleigh drag")
+        self.init_pao_ekman_button = QPushButton("PAO+Ekman")
+        self.init_pao_ekman_button.setToolTip("PAO init + Rayleigh/Ekman large-scale drag")
+
+        self.init_highh_button = QPushButton("High-h forcing")
+        self.init_highh_button.setToolTip("High-k spectral forcing + Rayleigh/Ekman large-scale drag")
 
         self.init_circle_button = QPushButton("Circle")
         self.init_circle_button.setToolTip("Initialize with circle stirring")
@@ -278,6 +281,7 @@ class MainWindow(QMainWindow, TurboLogicMixin):
 
         self.init_pao_button.clicked.connect(self.on_init_pao_clicked)  # type: ignore[attr-defined]
         self.init_pao_ekman_button.clicked.connect(self.on_init_pao_ekman_clicked)  # type: ignore[attr-defined]
+        self.init_highh_button.clicked.connect(self.on_init_highh_clicked)  # type: ignore[attr-defined]
         self.init_circle_button.clicked.connect(self.on_init_circle_clicked)  # type: ignore[attr-defined]
         self.init_rain_button.clicked.connect(self.on_init_rain_clicked)  # type: ignore[attr-defined]
         self.init_mouse_button.clicked.connect(self.on_init_mouse_clicked)  # type: ignore[attr-defined]
@@ -385,10 +389,11 @@ class MainWindow(QMainWindow, TurboLogicMixin):
 
         row0 = QHBoxLayout()
         row0.addWidget(self.init_pao_button)
+        row0.addWidget(self.init_pao_ekman_button)
+        row0.addWidget(self.init_highh_button)
         row0.addWidget(self.init_circle_button)
         row0.addWidget(self.init_rain_button)
         row0.addWidget(self.init_mouse_button)
-        row0.addWidget(self.init_pao_ekman_button)
         main.addLayout(row0)
 
         main.addWidget(self.image_label)

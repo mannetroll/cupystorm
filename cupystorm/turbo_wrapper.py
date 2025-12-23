@@ -37,9 +37,6 @@ class DnsSimulator:
         k0: float = 10.0,
         cfl: float = 0.2,
         seed: int = 1,
-        rayleigh_alpha0: float = 0.0,
-        rayleigh_k_cut: float = 0.0,
-        rayleigh_p: float = 8.0,
     ):
         self.N = int(n)
         self.m = 3 * self.N
@@ -47,10 +44,30 @@ class DnsSimulator:
         self.k0 = float(k0)
         self.cfl = float(cfl)
         self.seed = int(seed)
-        self.rayleigh_alpha0 = float(rayleigh_alpha0)
-        self.rayleigh_k_cut = float(rayleigh_k_cut)
-        self.rayleigh_p = float(rayleigh_p)
         self.max_steps = 5000
+
+
+        # ----------------------------------------------------------
+        # Rayleigh / Ekman drag defaults (large-scale dissipation)
+        #   Users can tune these by setting:
+        #     sim.rayleigh_alpha0, sim.rayleigh_k_cut, sim.rayleigh_p
+        # ----------------------------------------------------------
+        self.rayleigh_alpha0 = 0.0
+        self.rayleigh_k_cut = 4.0
+        self.rayleigh_p = 8.0
+
+        # ----------------------------------------------------------
+        # High-k spectral forcing defaults (vorticity forcing in k-space)
+        #   Users can tune these by setting:
+        #     sim.highk_amp0, sim.highk_kf1, sim.highk_kf2, sim.highk_hz
+        # ----------------------------------------------------------
+        kf = float(self.N) / 3.0
+        self.highk_active = False
+        self.highk_amp0 = 0.5
+        self.highk_kf1 = kf - 2.0
+        self.highk_kf2 = kf + 2.0
+        self.highk_hz = 2.0
+
 
         # --- ONLY: max SciPy FFT workers on CPU ---
         self.fft_workers = 4
@@ -68,10 +85,25 @@ class DnsSimulator:
                 CFL=self.cfl,
                 backend="auto",  # GUI uses the CPU/NumPy/GPU/CuPy backend
                 seed=self.seed,
-                rayleigh_alpha0=self.rayleigh_alpha0,
-                rayleigh_k_cut=self.rayleigh_k_cut,
-                rayleigh_p=self.rayleigh_p,
             )
+
+            # ----------------------------------------------------------
+            # Apply Rayleigh / High-k forcing settings into the DNS state
+            # (dns_step3 reads these directly)
+            # ----------------------------------------------------------
+            self.state.rayleigh_alpha0 = float(self.rayleigh_alpha0)
+            self.state.rayleigh_k_cut = float(self.rayleigh_k_cut)
+            self.state.rayleigh_p = float(self.rayleigh_p)
+            self.state.rayleigh_dirty = True
+
+            self.state.highk_active = bool(self.highk_active)
+            self.state.highk_amp0 = float(self.highk_amp0)
+            self.state.highk_kf1 = float(self.highk_kf1)
+            self.state.highk_kf2 = float(self.highk_kf2)
+            self.state.highk_hz = float(self.highk_hz)
+            self.state.highk_next_t = float(self.state.t)
+            self.state.highk_dirty = True
+
 
             self.nx = int(self.state.NZ_full)  # "height"
             self.ny = int(self.state.NX_full)  # "width"
@@ -157,10 +189,24 @@ class DnsSimulator:
                 CFL=self.cfl,
                 backend="auto",
                 seed=self.seed,
-                rayleigh_alpha0=self.rayleigh_alpha0,
-                rayleigh_k_cut=self.rayleigh_k_cut,
-                rayleigh_p=self.rayleigh_p,
             )
+
+
+        # ----------------------------------------------------------
+        # Apply Rayleigh / High-k forcing settings into the DNS state
+        # ----------------------------------------------------------
+        self.state.rayleigh_alpha0 = float(self.rayleigh_alpha0)
+        self.state.rayleigh_k_cut = float(self.rayleigh_k_cut)
+        self.state.rayleigh_p = float(self.rayleigh_p)
+        self.state.rayleigh_dirty = True
+
+        self.state.highk_active = bool(self.highk_active)
+        self.state.highk_amp0 = float(self.highk_amp0)
+        self.state.highk_kf1 = float(self.highk_kf1)
+        self.state.highk_kf2 = float(self.highk_kf2)
+        self.state.highk_hz = float(self.highk_hz)
+        self.state.highk_next_t = float(self.state.t)
+        self.state.highk_dirty = True
 
         # DEBUG: print full-grid sizes
         '''
@@ -221,10 +267,25 @@ class DnsSimulator:
                 CFL=self.cfl,
                 backend="auto",
                 seed=seed,
-                rayleigh_alpha0=self.rayleigh_alpha0,
-                rayleigh_k_cut=self.rayleigh_k_cut,
-                rayleigh_p=self.rayleigh_p,
             )
+
+
+        # ----------------------------------------------------------
+        # Apply Rayleigh / High-k forcing settings into the DNS state
+        # ----------------------------------------------------------
+        self.state.rayleigh_alpha0 = float(self.rayleigh_alpha0)
+        self.state.rayleigh_k_cut = float(self.rayleigh_k_cut)
+        self.state.rayleigh_p = float(self.rayleigh_p)
+        self.state.rayleigh_dirty = True
+
+        self.state.highk_active = bool(self.highk_active)
+        self.state.highk_amp0 = float(self.highk_amp0)
+        self.state.highk_kf1 = float(self.highk_kf1)
+        self.state.highk_kf2 = float(self.highk_kf2)
+        self.state.highk_hz = float(self.highk_hz)
+        self.state.highk_next_t = float(self.state.t)
+        self.state.highk_dirty = True
+
 
         self.nx = int(self.state.NZ_full)
         self.ny = int(self.state.NX_full)
