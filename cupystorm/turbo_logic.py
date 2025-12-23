@@ -332,8 +332,8 @@ class TurboLogicMixin:
         self.sim.rayleigh_k_cut = 4.0
         self.sim.rayleigh_p = 8.0
 
-        # High-k forcing defaults (band near k ~ N/3)
-        kf = float(self.sim.N) / 3.0
+        # High-k forcing defaults (band near k ~ N/16)
+        kf = int(round(self.sim.k0)) #float(self.sim.N) / 16.0
         self.sim.highk_active = True
         self.sim.highk_amp0 = 0.5
         self.sim.highk_kf1 = kf - 2.0
