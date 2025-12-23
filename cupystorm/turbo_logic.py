@@ -62,6 +62,15 @@ class TurboLogicMixin:
         self.sim.state.force_active = False
         self.sim.state.force_dirty = True
 
+        # Ensure optional large-scale drag / high-k forcing start disabled in default Rain mode
+        self.sim.rayleigh_alpha0 = 0.0
+        S = self.sim.state
+        S.rayleigh_alpha0 = 0.0
+        S.rayleigh_dirty = True
+        self.sim.highk_active = False
+        S.highk_active = False
+        S.highk_dirty = True
+
     def _update_run_buttons(self) -> None:
         running = self.timer.isActive()
         self.start_button.setEnabled(not running)
@@ -159,6 +168,15 @@ class TurboLogicMixin:
         elif self._force_mode == "circle":
             self.sim.reset_field()
 
+            # Disable Rayleigh/high-k forcing in circle mode
+            self.sim.rayleigh_alpha0 = 0.0
+            S = self.sim.state
+            S.rayleigh_alpha0 = 0.0
+            S.rayleigh_dirty = True
+            self.sim.highk_active = False
+            S.highk_active = False
+            S.highk_dirty = True
+
             self.cx = 0.5 * (self.sim.px - 1)
             self.cy = 0.5 * (self.sim.py - 1)
             self.R = self.sim.py / 4.0
@@ -178,11 +196,31 @@ class TurboLogicMixin:
 
         elif self._force_mode == "rain":
             self.sim.reset_field()
+
+            # Disable Rayleigh/high-k forcing in Rain mode (rain injector only)
+            self.sim.rayleigh_alpha0 = 0.0
+            S = self.sim.state
+            S.rayleigh_alpha0 = 0.0
+            S.rayleigh_dirty = True
+            self.sim.highk_active = False
+            S.highk_active = False
+            S.highk_dirty = True
+
             self._injector_reset()
             self._reset_gui_after_init()
 
         elif self._force_mode == "mouse":
             self.sim.reset_field()
+
+            # Disable Rayleigh/high-k forcing in Mouse mode
+            self.sim.rayleigh_alpha0 = 0.0
+            S = self.sim.state
+            S.rayleigh_alpha0 = 0.0
+            S.rayleigh_dirty = True
+            self.sim.highk_active = False
+            S.highk_active = False
+            S.highk_dirty = True
+
             self.sim.state.force_active = False
             self.sim.state.force_dirty = True
             self._reset_gui_after_init()
@@ -227,6 +265,15 @@ class TurboLogicMixin:
 
         self.sim.state.force_active = False
         self.sim.state.force_dirty = True
+
+        # Disable Rayleigh/high-k forcing in plain PAO mode
+        self.sim.rayleigh_alpha0 = 0.0
+        S = self.sim.state
+        S.rayleigh_alpha0 = 0.0
+        S.rayleigh_dirty = True
+        self.sim.highk_active = False
+        S.highk_active = False
+        S.highk_dirty = True
 
         self._force_mode = "pao"
         self._update_force_mode_buttons()
@@ -322,6 +369,16 @@ class TurboLogicMixin:
 
         self.sim.reset_field()
 
+        # Disable Rayleigh/high-k forcing in circle mode
+        self.sim.rayleigh_alpha0 = 0.0
+        S = self.sim.state
+        S.rayleigh_alpha0 = 0.0
+        S.rayleigh_dirty = True
+        self.sim.highk_active = False
+        S.highk_active = False
+        S.highk_dirty = True
+
+
         self.cx = 0.5 * (self.sim.px - 1)
         self.cy = 0.5 * (self.sim.py - 1)
         self.R = self.sim.py / 4.0
@@ -348,6 +405,16 @@ class TurboLogicMixin:
         self.on_stop_clicked()
 
         self.sim.reset_field()
+
+        # Disable Rayleigh/high-k forcing in Rain mode (rain injector only)
+        self.sim.rayleigh_alpha0 = 0.0
+        S = self.sim.state
+        S.rayleigh_alpha0 = 0.0
+        S.rayleigh_dirty = True
+        self.sim.highk_active = False
+        S.highk_active = False
+        S.highk_dirty = True
+
         self._injector_reset()
 
         self._force_mode = "rain"
@@ -361,6 +428,16 @@ class TurboLogicMixin:
         self.on_stop_clicked()
 
         self.sim.reset_field()
+
+        # Disable Rayleigh/high-k forcing in Mouse mode
+        self.sim.rayleigh_alpha0 = 0.0
+        S = self.sim.state
+        S.rayleigh_alpha0 = 0.0
+        S.rayleigh_dirty = True
+        self.sim.highk_active = False
+        S.highk_active = False
+        S.highk_dirty = True
+
         self.sim.state.force_active = False
         self.sim.state.force_dirty = True
 
