@@ -336,8 +336,8 @@ class TurboLogicMixin:
         kf = int(round(self.sim.k0)) #float(self.sim.N) / 16.0
         self.sim.highk_active = True
         self.sim.highk_amp0 = 0.5
-        self.sim.highk_kf1 = kf - 2.0
-        self.sim.highk_kf2 = kf + 2.0
+        self.sim.highk_kf1 = max(1, kf - 2)
+        self.sim.highk_kf2 = max(self.sim.highk_kf1 + 1, kf + 2)
         self.sim.highk_hz = 2.0
 
         S = self.sim.state
