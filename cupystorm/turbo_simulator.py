@@ -1112,8 +1112,8 @@ def _update_highk_omega_hat(S: DnsState) -> None:
     S.highk_mask[...] = (k >= kf1) & (k <= kf2)
 
     # Random complex phases + radial band mask
-    a = xp.random.standard_normal((NZ, NX_half), dtype=xp.float32)
-    b = xp.random.standard_normal((NZ, NX_half), dtype=xp.float32)
+    a = xp.random.standard_normal((NZ, NX_half)).astype(xp.float32, copy=False)
+    b = xp.random.standard_normal((NZ, NX_half)).astype(xp.float32, copy=False)
 
     F = S.highk_omega_hat
     F.real[...] = a
