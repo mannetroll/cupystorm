@@ -37,6 +37,9 @@ class DnsSimulator:
         k0: float = 10.0,
         cfl: float = 0.2,
         seed: int = 1,
+        rayleigh_alpha0: float = 0.0,
+        rayleigh_k_cut: float = 0.0,
+        rayleigh_p: float = 8.0,
     ):
         self.N = int(n)
         self.m = 3 * self.N
@@ -44,6 +47,9 @@ class DnsSimulator:
         self.k0 = float(k0)
         self.cfl = float(cfl)
         self.seed = int(seed)
+        self.rayleigh_alpha0 = float(rayleigh_alpha0)
+        self.rayleigh_k_cut = float(rayleigh_k_cut)
+        self.rayleigh_p = float(rayleigh_p)
         self.max_steps = 5000
 
         # --- ONLY: max SciPy FFT workers on CPU ---
@@ -62,6 +68,9 @@ class DnsSimulator:
                 CFL=self.cfl,
                 backend="auto",  # GUI uses the CPU/NumPy/GPU/CuPy backend
                 seed=self.seed,
+                rayleigh_alpha0=self.rayleigh_alpha0,
+                rayleigh_k_cut=self.rayleigh_k_cut,
+                rayleigh_p=self.rayleigh_p,
             )
 
             self.nx = int(self.state.NZ_full)  # "height"
@@ -148,6 +157,9 @@ class DnsSimulator:
                 CFL=self.cfl,
                 backend="auto",
                 seed=self.seed,
+                rayleigh_alpha0=self.rayleigh_alpha0,
+                rayleigh_k_cut=self.rayleigh_k_cut,
+                rayleigh_p=self.rayleigh_p,
             )
 
         # DEBUG: print full-grid sizes
@@ -209,6 +221,9 @@ class DnsSimulator:
                 CFL=self.cfl,
                 backend="auto",
                 seed=seed,
+                rayleigh_alpha0=self.rayleigh_alpha0,
+                rayleigh_k_cut=self.rayleigh_k_cut,
+                rayleigh_p=self.rayleigh_p,
             )
 
         self.nx = int(self.state.NZ_full)

@@ -176,6 +176,27 @@ class TurboLogicMixin:
         if was_running:
             self.on_start_clicked()
 
+    def on_init_pao_ekman_clicked(self) -> None:
+        # Start PAO + large-scale Rayleigh/Ekman drag in one click.
+        # (Keeps existing PAO button behaviour untouched.)
+        self.on_stop_clicked()
+
+        # Default large-scale drag params (user can tune in code later)
+        self.sim.rayleigh_alpha0 = 0.05
+        self.sim.rayleigh_k_cut = 4.0
+        self.sim.rayleigh_p = 8.0
+
+        self.sim.reset_field()
+        dns_all.dns_pao_host_init(self.sim.state)
+        self._post_init_nextdt()
+
+        self.sim.state.force_active = False
+        self.sim.state.force_dirty = True
+
+        self._force_mode = "pao"
+        self._reset_gui_after_init()
+        self.on_start_clicked()
+
     def on_init_circle_clicked(self) -> None:
         was_running = self.timer.isActive()
         self.on_stop_clicked()

@@ -227,6 +227,13 @@ class DnsState:
     seed_init: int = 1
     fft_workers: int = 1
 
+    # Rayleigh / Ekman linear friction (large-scale damping in spectral space)
+    # alpha_k has shape (NZ, NX/2) on the compact spectral grid used for OM2.
+    rayleigh_alpha0: float = 0.0
+    rayleigh_k_cut: float = 0.0
+    rayleigh_p: float = 8.0
+    alpha_k: any = None
+
 
     # Cached FFT module (scipy.fft or cupyx.scipy.fft)
     fft: any = None
@@ -318,6 +325,9 @@ def create_dns_state(
     CFL: float = 0.75,
     backend: Literal["cpu", "gpu", "auto"] = "auto",
     seed: int = 1,
+    rayleigh_alpha0: float = 0.0,
+    rayleigh_k_cut: float = 0.0,
+    rayleigh_p: float = 8.0,
 ) -> DnsState:
     xp = get_xp(backend)
 
@@ -362,6 +372,9 @@ def create_dns_state(
         cflnum=CFL,
         seed_init=int(seed),
         fft_workers=4,
+        rayleigh_alpha0=float(rayleigh_alpha0),
+        rayleigh_k_cut=float(rayleigh_k_cut),
+        rayleigh_p=float(rayleigh_p),
     )
     print(f" workers (CPU): {state.fft_workers}")
 
@@ -426,6 +439,21 @@ def create_dns_state(
     state.step3_K2 = (ax2 + gz2).astype(xp.float32, copy=False)
     state.step3_GA = (gz * ax).astype(xp.float32, copy=False)
     state.step3_G2mA2 = (gz2 - ax2).astype(xp.float32, copy=False)
+
+    # ----------------------------------------------------------
+    # Rayleigh/Ekman friction mask (large-scale-only damping)
+    #   L(k) = visc*k^2 + alpha(k)
+    # where alpha(k) ~ alpha0 for k<<k_cut and ~0 for k>>k_cut.
+    #
+    # Default alpha0=0 keeps existing behaviour unchanged.
+    # ----------------------------------------------------------
+    if state.rayleigh_alpha0 != 0.0 and state.rayleigh_k_cut > 0.0:
+        k = xp.sqrt(state.step3_K2)
+        mask = xp.float32(1.0) / (xp.float32(1.0) + (k / xp.float32(state.rayleigh_k_cut)) ** xp.float32(state.rayleigh_p))
+        state.alpha_k = (xp.float32(state.rayleigh_alpha0) * mask).astype(xp.float32, copy=False)
+    else:
+        state.alpha_k = xp.zeros_like(state.step3_K2, dtype=xp.float32)
+
 
     if NX_half > 1:
         state.step3_invK2_sub = (xp.float32(1.0) / (state.step3_K2[:, 1:] + xp.float32(1.0e-30))).astype(xp.float32, copy=False)
@@ -1099,10 +1127,18 @@ def dns_step3(S: DnsState) -> None:
 
 
     # Crank–Nicolson in spectral space (Fortran STEP3), update OM2 in-place
+    # Linear operator: L(k) = visc*k^2 + alpha(k)
     VT = xp.float32(0.5) * visc * dt
     ARG = S.step3_ARG                                 # (NZ, NX_half), float32
     DEN = S.step3_DEN                                 # (NZ, NX_half), float32
-    xp.multiply(K2, VT, out=ARG)                      # ARG = VT*K2
+    xp.multiply(K2, VT, out=ARG)                      # ARG = 0.5*dt*visc*k^2
+
+    # Add Rayleigh/Ekman friction (large-scale damping) if enabled:
+    # ARG += 0.5*dt*alpha_k
+    if S.rayleigh_alpha0 != 0.0 and S.alpha_k is not None:
+        xp.multiply(S.alpha_k, xp.float32(0.5) * dt, out=DEN)  # temporary
+        ARG += DEN
+
     xp.add(ARG, xp.float32(1.0), out=DEN)             # DEN = 1 + ARG
 
     c2 = xp.float32(0.5) * dt * (xp.float32(2.0) + cnm1)
