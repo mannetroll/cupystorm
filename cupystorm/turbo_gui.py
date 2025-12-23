@@ -182,8 +182,8 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self.init_pao_button = QPushButton("PAO")
         self.init_pao_button.setToolTip("Initilize with PAO spectrum")
 
-        self.init_pao_ekman_button = QPushButton("PAO+Ekman")
-        self.init_pao_ekman_button.setToolTip("PAO init + Rayleigh/Ekman large-scale drag")
+        self.init_pao_ekman_button = QPushButton("Ekman/Rayleigh")
+        self.init_pao_ekman_button.setToolTip("PAO init + Ekman/Rayleigh large-scale drag")
 
         self.init_highh_button = QPushButton("High-h forcing")
         self.init_highh_button.setToolTip("High-k spectral forcing + Rayleigh/Ekman large-scale drag")
