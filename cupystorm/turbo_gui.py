@@ -379,6 +379,22 @@ class MainWindow(QMainWindow, TurboLogicMixin):
             if w is not None:
                 dst_layout.addWidget(w)
 
+    def _update_force_mode_buttons(self) -> None:
+        mode_to_btn = {
+            "pao": self.init_pao_button,
+            "pao_ekman": self.init_pao_ekman_button,
+            "highh": self.init_highh_button,
+            "circle": self.init_circle_button,
+            "rain": self.init_rain_button,
+            "mouse": self.init_mouse_button,
+        }
+
+        current = getattr(self, "_force_mode", "")
+        for mode, btn in mode_to_btn.items():
+            f = btn.font()
+            f.setBold(mode == current)
+            btn.setFont(f)
+
     def _build_layout(self) -> None:
         old = self.centralWidget()
         if old is not None:

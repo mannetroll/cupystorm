@@ -34,6 +34,7 @@ class TurboLogicMixin:
         #   "rain"  : random body-force kicks (auto force)
         #   "mouse" : mouse drag force only (no auto force)
         self._force_mode = "rain"
+        self._update_force_mode_buttons()
 
         # --- FPS from simulation start ---
         self._sim_start_time = time.time()
@@ -228,6 +229,7 @@ class TurboLogicMixin:
         self.sim.state.force_dirty = True
 
         self._force_mode = "pao"
+        self._update_force_mode_buttons()
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -263,6 +265,7 @@ class TurboLogicMixin:
         S.force_dirty = True
 
         self._force_mode = "pao_ekman"
+        self._update_force_mode_buttons()
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -277,12 +280,12 @@ class TurboLogicMixin:
         # Default large-scale drag params (user can tune in code later)
         self.sim.rayleigh_alpha0 = 0.05
         self.sim.rayleigh_k_cut = 4.0
-        self.sim.rayleigh_p = 12.0
+        self.sim.rayleigh_p = 8.0
 
-        # High-k forcing defaults (band near k ~ N/2)
-        kf = float(self.sim.N) / 2.0
+        # High-k forcing defaults (band near k ~ N/3)
+        kf = float(self.sim.N) / 3.0
         self.sim.highk_active = True
-        self.sim.highk_amp0 = 0.1
+        self.sim.highk_amp0 = 0.5
         self.sim.highk_kf1 = kf - 2.0
         self.sim.highk_kf2 = kf + 2.0
         self.sim.highk_hz = 2.0
@@ -308,6 +311,7 @@ class TurboLogicMixin:
         S.force_dirty = True
 
         self._force_mode = "highh"
+        self._update_force_mode_buttons()
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -334,6 +338,7 @@ class TurboLogicMixin:
         )
 
         self._force_mode = "circle"
+        self._update_force_mode_buttons()
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -346,6 +351,7 @@ class TurboLogicMixin:
         self._injector_reset()
 
         self._force_mode = "rain"
+        self._update_force_mode_buttons()
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
@@ -359,6 +365,7 @@ class TurboLogicMixin:
         self.sim.state.force_dirty = True
 
         self._force_mode = "mouse"
+        self._update_force_mode_buttons()
         self._reset_gui_after_init()
         if was_running:
             self.on_start_clicked()
