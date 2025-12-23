@@ -182,8 +182,8 @@ class TurboLogicMixin:
         self.on_stop_clicked()
 
         # Default large-scale drag params (user can tune in code later)
-        self.sim.rayleigh_alpha0 = 0.05
-        self.sim.rayleigh_k_cut = 4.0
+        self.sim.rayleigh_alpha0 = 0.1
+        self.sim.rayleigh_k_cut = 6.0
         self.sim.rayleigh_p = 8.0
 
         self.sim.reset_field()
