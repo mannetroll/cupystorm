@@ -1,15 +1,15 @@
 # turbo_wrapper.py
+import math
+import os
 from pathlib import Path
 from typing import Union
 
-import numpy as np
-import math
-import os
-from cupystorm import turbo_simulator as dns_all
 from PIL import Image
-
+import numpy as np
 # --- ONLY: SciPy FFT threading control (CPU) ---
 import scipy.fft as spfft
+
+from cupystorm import turbo_simulator as dns_all
 
 
 class DnsSimulator:
@@ -31,12 +31,12 @@ class DnsSimulator:
     VAR_STREAM = 4
 
     def __init__(
-        self,
-        n: int = 128,
-        re: float = 100000,
-        k0: float = 10.0,
-        cfl: float = 0.25,
-        seed: int = 1,
+            self,
+            n: int = 128,
+            re: float = 100000,
+            k0: float = 10.0,
+            cfl: float = 0.25,
+            seed: int = 1,
     ):
         self.N = int(n)
         self.m = 3 * self.N
@@ -45,7 +45,6 @@ class DnsSimulator:
         self.cfl = float(cfl)
         self.seed = int(seed)
         self.max_steps = 5000
-
 
         # ----------------------------------------------------------
         # Rayleigh / Ekman drag defaults (large-scale dissipation)
@@ -67,7 +66,6 @@ class DnsSimulator:
         self.highk_kf1 = kf - 2.0
         self.highk_kf2 = kf + 2.0
         self.highk_hz = 2.0
-
 
         # --- ONLY: max SciPy FFT workers on CPU ---
         self.fft_workers = 4
@@ -103,7 +101,6 @@ class DnsSimulator:
             self.state.highk_hz = float(self.highk_hz)
             self.state.highk_next_t = float(self.state.t)
             self.state.highk_dirty = True
-
 
             self.nx = int(self.state.NZ_full)  # "height"
             self.ny = int(self.state.NX_full)  # "width"
@@ -164,7 +161,7 @@ class DnsSimulator:
             dns_all.dns_step2b(S)
             dns_all.dns_step3(S)
             dns_all.dns_step2a(S)
-            if (self.iteration % mod_next_dt) == 0:
+            if (self.iteration < 100) or (self.iteration % mod_next_dt) == 0:
                 dns_all.next_dt(S)
 
         S.t += dt_old
@@ -188,7 +185,6 @@ class DnsSimulator:
                 backend="auto",
                 seed=self.seed,
             )
-
 
         # ----------------------------------------------------------
         # Apply Rayleigh / High-k forcing settings into the DNS state
@@ -268,7 +264,6 @@ class DnsSimulator:
                 seed=seed,
             )
 
-
         # ----------------------------------------------------------
         # Apply Rayleigh / High-k forcing settings into the DNS state
         # ----------------------------------------------------------
@@ -284,7 +279,6 @@ class DnsSimulator:
         self.state.highk_hz = float(self.highk_hz)
         self.state.highk_next_t = float(self.state.t)
         self.state.highk_dirty = True
-
 
         self.nx = int(self.state.NZ_full)
         self.ny = int(self.state.NX_full)
@@ -315,12 +309,12 @@ class DnsSimulator:
         return {"t": float(self.t), "dt": float(self.dt), "cn": float(self.cn)}
 
     def set_body_force(
-        self,
-        ix_full: int,
-        iz_full: int,
-        amp: float = 0.2,
-        sigma: float = 12.0,
-        active: bool = True,
+            self,
+            ix_full: int,
+            iz_full: int,
+            amp: float = 0.2,
+            sigma: float = 12.0,
+            active: bool = True,
     ) -> None:
         S = self.state
         S.force_active = bool(active)
@@ -478,7 +472,7 @@ if __name__ == "__main__":
     for i in range(10):
         sim.step(1)
         d = sim.diagnostics()
-        print(f"Step {i+1:2d}: T={d['t']:.6f}, DT={d['dt']:.6f}, CN={d['cn']:.6f}")
+        print(f"Step {i + 1:2d}: T={d['t']:.6f}, DT={d['dt']:.6f}, CN={d['cn']:.6f}")
 
     pix = sim.make_pixels_component()
     print("Pixels:", pix.shape, pix[0, 0], pix[10, 10])
