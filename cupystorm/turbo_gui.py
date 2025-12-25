@@ -511,7 +511,7 @@ class MainWindow(QMainWindow, TurboLogic):
 
         txt = (
             f"FPS: {fps_str} | Iter: {it:5d} | T: {t:6.3f} | dt: {dt:.6f} "
-            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:14.12f}"
+            f"| DPP: {dpp}% | {elapsed_min:4.1f} min | Visc: {visc:16.14f}"
         )
         self.status.showMessage(txt)
 
