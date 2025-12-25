@@ -287,8 +287,8 @@ class MainWindow(QMainWindow, TurboLogicMixin):
 
         self.init_pao_button.clicked.connect(self.on_init_pao_clicked)  # type: ignore[attr-defined]
         self.init_highh_button.clicked.connect(self.on_init_highh_clicked)  # type: ignore[attr-defined]
-        self.init_circle_button.clicked.connect(self.on_init_circle_clicked)  # type: ignore[attr-defined]
         self.init_rain_button.clicked.connect(self.on_init_rain_clicked)  # type: ignore[attr-defined]
+        self.init_circle_button.clicked.connect(self.on_init_circle_clicked)  # type: ignore[attr-defined]
         self.init_mouse_button.clicked.connect(self.on_init_mouse_clicked)  # type: ignore[attr-defined]
 
         self.variable_combo.currentIndexChanged.connect(self.on_variable_changed)  # type: ignore[attr-defined]
@@ -410,8 +410,8 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         row0 = QHBoxLayout()
         row0.addWidget(self.init_pao_button)
         row0.addWidget(self.init_highh_button)
-        row0.addWidget(self.init_circle_button)
         row0.addWidget(self.init_rain_button)
+        row0.addWidget(self.init_circle_button)
         row0.addWidget(self.init_mouse_button)
         main.addLayout(row0)
 
