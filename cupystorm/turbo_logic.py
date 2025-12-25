@@ -85,6 +85,7 @@ class TurboLogic:
         if not self.timer.isActive():
             self.timer.start()
         self._update_run_buttons()
+        print(f" current mode: {self._force_mode}")
 
     def on_stop_clicked(self) -> None:
         if self.timer.isActive():
