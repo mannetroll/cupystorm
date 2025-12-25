@@ -215,20 +215,20 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self.n_combo = QComboBox()
         self.n_combo.setToolTip("N: Grid Size (N)")
         self.n_combo.addItems(
-            ["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096"]
+            ["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144"]
         )
         self.n_combo.setCurrentText(str(self.sim.N))
 
         # Reynolds selector (Re)
         self.re_combo = QComboBox()
         self.re_combo.setToolTip("R: Reynolds Number (Re)")
-        self.re_combo.addItems(["1", "100", "1000", "10000", "100000", "1E6", "1E9", "1E12"])
+        self.re_combo.addItems(["1", "100", "1000", "10000", "100000", "1E6", "1E9", "1E12", "1E15", "1E18"])
         self.re_combo.setCurrentText(str(int(self.sim.re)))
 
         # K0 selector
         self.k0_combo = QComboBox()
         self.k0_combo.setToolTip("K: Initial energy peak wavenumber (K0)")
-        self.k0_combo.addItems(["1", "5", "10", "15", "25", "35", "50"])
+        self.k0_combo.addItems(["1", "5", "10", "15", "25", "35", "50", "100"])
         self.k0_combo.setCurrentText(str(int(self.sim.k0)))
 
         # Colormap selector
@@ -248,7 +248,7 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         # Steps selector
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
-        self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "1E6"])
+        self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "3E5", "1E6"])
         self.steps_combo.setCurrentText("1E6")
 
         # Update selector

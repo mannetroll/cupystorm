@@ -33,9 +33,10 @@ Run an cupystormive window that:
   - Max steps / auto-reset limit
   - GUI update interval (how often to refresh the display)
 - Includes force/initialization modes:
-  - **PAO**: PAO spectrum init (no continuous forcing)
+  - **Navier-Stokes**: PAO spectrum init
+  - **High-k forcing**: High-k spectral forcing + Ekman/Rayleigh large-scale drag
+  - **Rain**: random “kick” forcing events
   - **Circle**: a forcing point moves on a circular trajectory (continuous forcing)
-  - **Rain**: random “kick” forcing events (good for sustained turbulence)
   - **Mouse**: apply forcing by click/drag in the image
 
 ### Keyboard shortcuts
