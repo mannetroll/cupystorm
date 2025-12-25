@@ -12,7 +12,7 @@ from cupystorm.turbo_colors import DEFAULT_FORCE_AMP, DEFAULT_FORCE_SIGMA
 from cupystorm.turbo_wrapper import DnsSimulator
 
 
-class TurboLogicMixin:
+class TurboLogic:
     # These are provided by the concrete MainWindow class (or another mixin),
     # but we declare them here so type-checkers stop complaining.
     sim: DnsSimulator

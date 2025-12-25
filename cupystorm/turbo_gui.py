@@ -32,7 +32,7 @@ from cupystorm.turbo_colors import (
     QT_COLOR_TABLES,
     QT_GRAY_TABLE, DISPLAY_NORM_K_STD, DISPLAY_NORM_ENABLED,
 )
-from cupystorm.turbo_logic import TurboLogicMixin
+from cupystorm.turbo_logic import TurboLogic
 from cupystorm.turbo_wrapper import DnsSimulator
 
 
@@ -121,7 +121,7 @@ class ClickableLabel(QLabel):
         super().mouseReleaseEvent(event)
 
 
-class MainWindow(QMainWindow, TurboLogicMixin):
+class MainWindow(QMainWindow, TurboLogic):
     _sc_v: Optional[QShortcut]
     _sc_c: Optional[QShortcut]
     _sc_n: Optional[QShortcut]
