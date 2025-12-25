@@ -71,7 +71,7 @@ From the project root:
     uv run python -m cupystorm.turbo_main
 
 
-## The DNS with SciPy (384 x 384) Rain
+## The DNS with SciPy (256 x 256) Rain
 
 ![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window.png)
 
