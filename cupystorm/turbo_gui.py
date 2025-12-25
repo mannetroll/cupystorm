@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QStyle,
     QVBoxLayout,
     QWidget,
+    QLineEdit,
 )
 import numpy as np
 
@@ -500,7 +501,7 @@ class MainWindow(QMainWindow, TurboLogic):
         fps_str = f"{fps:4.1f}" if fps is not None else " N/A"
 
         # DPP = Display Pixel Percentage
-        dpp = int(100/self._display_scale())
+        dpp = int(100 / self._display_scale())
 
         elapsed_min = (time.time() - self._sim_start_time) / 60.0
         visc = float(self.sim.state.visc)
@@ -586,6 +587,24 @@ class MainWindow(QMainWindow, TurboLogic):
 
         # IMPORTANT: keep the current mode after changing N
         self.on_reset_clicked()
+
+    def _desktop_path(self) -> str:
+        return QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DesktopLocation)
+
+    def _make_folder_dialog(self, title: str, start_dir: str) -> QFileDialog:
+        # --- Create non-native dialog (macOS compatible) ---
+        dlg = QFileDialog(self)
+        dlg.setWindowTitle(title)
+        dlg.setFileMode(QFileDialog.FileMode.Directory)
+        dlg.setOption(QFileDialog.Option.ShowDirsOnly, True)
+        dlg.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+        dlg.setDirectory(start_dir)
+
+        # Prefill the directory edit field
+        for lineedit in dlg.findChildren(QLineEdit):
+            lineedit.setText(".")  # type: ignore[attr-defined]
+
+        return dlg
 
     def keyPressEvent(self, event) -> None:
         key = event.key()

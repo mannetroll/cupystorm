@@ -284,8 +284,6 @@ class TurboLogic:
         if was_running:
             self.on_start_clicked()
 
-
-
     def on_init_pao_ekman_clicked(self) -> None:
         was_running = self.timer.isActive()
         self.on_stop_clicked()
@@ -333,7 +331,7 @@ class TurboLogic:
         self.sim.rayleigh_p = 8.0
 
         # High-k forcing defaults (band near k ~ N/16)
-        kf = int(round(self.sim.k0)) #float(self.sim.N) / 16.0
+        kf = int(round(self.sim.k0))  # float(self.sim.N) / 16.0
         self.sim.highk_active = True
         self.sim.highk_amp0 = 0.5
         self.sim.highk_kf1 = max(1, kf - 2)
@@ -380,7 +378,6 @@ class TurboLogic:
         self.sim.highk_active = False
         S.highk_active = False
         S.highk_dirty = True
-
 
         self.cx = 0.5 * (self.sim.px - 1)
         self.cy = 0.5 * (self.sim.py - 1)
