@@ -1,6 +1,7 @@
 # turbo_wrapper.py
 from pathlib import Path
 from typing import Union
+from time import perf_counter
 
 import numpy as np
 import math
@@ -251,6 +252,8 @@ class DnsSimulator:
     # ------------------------------------------------------------------
     def reset_field(self) -> None:
         """Reinitialize the DNS state on the Fortran side."""
+        start = perf_counter()
+
         self.t = np.float32(0.0)
         self.dt = np.float32(0.0)
         self.cn = np.float32(1.0)
@@ -310,6 +313,9 @@ class DnsSimulator:
         self.t = float(self.state.t)
         self.dt = float(self.state.dt)
         self.cn = float(self.state.cn)
+
+        elapsed = perf_counter() - start
+        print(f" DNS initialization took {elapsed:.3f} seconds")
 
     # ------------------------------------------------------------------
     def diagnostics(self) -> dict:
