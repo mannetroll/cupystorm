@@ -335,17 +335,19 @@ class DnsSimulator:
     def _float_to_pixels(field: np.ndarray) -> np.ndarray:
         """
         Map a float field to 8-bit grayscale [1,255], like the PGM dumper.
+        NaN/Inf are mapped to mid-gray.
         """
-        fmin = float(field.min())
-        fmax = float(field.max())
+        fmin = float(np.nanmin(field))
+        fmax = float(np.nanmax(field))
         rng = fmax - fmin
 
-        if abs(rng) <= 1.0e-12:
-            # essentially constant field → gray
+        if (not np.isfinite(rng)) or abs(rng) <= 1.0e-12:
             return np.full(field.shape, 128, dtype=np.uint8)
 
-        norm = (field - fmin) / rng    # 0..1
-        pixf = 1.0 + norm * 254.0      # 1..255
+        norm = (field - fmin) / rng  # 0..1 (but may contain NaN/Inf)
+        norm = np.nan_to_num(norm, nan=0.5, posinf=1.0, neginf=0.0)
+
+        pixf = 1.0 + norm * 254.0  # 1..255
         pix = np.clip(pixf, 1.0, 255.0)
 
         return pix.astype(np.uint8)
