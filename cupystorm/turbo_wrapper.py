@@ -331,7 +331,6 @@ class DnsSimulator:
         S.force_sigma = float(sigma)
 
     # ------------------------------------------------------------------
-    @staticmethod
     def _float_to_pixels(field: np.ndarray) -> np.ndarray:
         """
         Map a float field to 8-bit grayscale [1,255], like the PGM dumper.
