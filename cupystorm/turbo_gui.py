@@ -359,8 +359,10 @@ class MainWindow(QMainWindow, TurboLogic):
             return 4.0
         if N <= 4096:
             return 6.0
-        else:
+        if N <= 6199:
             return 9.0
+        else:
+            return 12.0
 
     def _display_size_px(self) -> tuple[int, int]:
         scale = self._display_scale()
