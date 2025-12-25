@@ -395,6 +395,7 @@ class MainWindow(QMainWindow, TurboLogic):
         }
 
         current = getattr(self, "_force_mode", "")
+        print(f" current mode: {current}")
         for mode, btn in mode_to_btn.items():
             f = btn.font()
             f.setBold(mode == current)
