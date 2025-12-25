@@ -29,6 +29,7 @@ formulas follow the CUDA kernels line-by-line.
 """
 from contextlib import nullcontext
 import time
+import datetime as _dt
 import math
 import sys
 from time import perf_counter
@@ -577,7 +578,8 @@ def dns_pao_host_init(S: DnsState):
     K0 = np.float32(S.K0)
     NORM = PI * K0 * K0
 
-    print(f" PAO initialization started: N={N}, K0={int(K0)}, Re={int(S.Re)}")
+    print("--- INITIALIZING PAO (SciPy/CuPy) ---", _dt.datetime.now().strftime("%Y-%m-%d %H:%M"))
+    print(f" N={N}, K0={int(K0)}, Re={int(S.Re)}")
 
     # ------------------------------------------------------------------
     # Build ALFA(N/2) and GAMMA(N)  (Fortran DALFA, DGAMMA, E1, E3)
