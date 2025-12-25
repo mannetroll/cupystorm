@@ -141,7 +141,7 @@ class DnsSimulator:
             self.cn = float(self.state.cn)
 
     # ------------------------------------------------------------------
-    def step(self, mod_next_dt: int, run_next_dt=False) -> None:
+    def step(self, mod_next_dt: int) -> None:
         """Advance one DNS step on the Fortran side."""
         # In the pure-Python version this mirrors dns_all.run_dns:
         #   dt_old = DT
@@ -159,17 +159,15 @@ class DnsSimulator:
                 dns_all.dns_step2b(S)
                 dns_all.dns_step3(S)
                 dns_all.dns_step2a(S)
+                dns_all.next_dt(S)
         else:
             dns_all.dns_step2b(S)
             dns_all.dns_step3(S)
             dns_all.dns_step2a(S)
-
-        # Call NEXTDT every mod_next_dt iterations
-        if (self.iteration % mod_next_dt) == 0 or run_next_dt:
-            dns_all.next_dt(S)
+            if (self.iteration % mod_next_dt) == 0:
+                dns_all.next_dt(S)
 
         S.t += dt_old
-
         self.t = float(S.t)
         self.dt = float(S.dt)
         self.cn = float(S.cn)

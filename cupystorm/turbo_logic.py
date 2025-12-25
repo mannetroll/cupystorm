@@ -91,12 +91,6 @@ class TurboLogic:
             self.timer.stop()
         self._update_run_buttons()
 
-    def on_step_clicked(self) -> None:
-        self.sim.step()
-        pixels = self.sim.get_frame_pixels()
-        self._update_image(pixels)
-        self._update_status(self.sim.get_time(), self.sim.get_iteration(), fps=None)
-
     def on_reset_clicked(self) -> None:
         was_running = self.timer.isActive()
         if was_running:
@@ -562,7 +556,7 @@ class TurboLogic:
     def _on_timer(self) -> None:
         t = self.sim.get_time()
 
-        self.sim.step(self._update_intervall, run_next_dt=True)
+        self.sim.step(self._update_intervall)
 
         self._status_update_counter += 1
 
