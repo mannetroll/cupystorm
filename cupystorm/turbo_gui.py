@@ -122,6 +122,15 @@ class ClickableLabel(QLabel):
 
 
 class MainWindow(QMainWindow, TurboLogicMixin):
+    _sc_v: Optional[QShortcut]
+    _sc_c: Optional[QShortcut]
+    _sc_n: Optional[QShortcut]
+    _sc_r: Optional[QShortcut]
+    _sc_k: Optional[QShortcut]
+    _sc_l: Optional[QShortcut]
+    _sc_s: Optional[QShortcut]
+    _sc_u: Optional[QShortcut]
+
     def __init__(self, sim: DnsSimulator) -> None:
         super().__init__()
 
@@ -179,11 +188,8 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self.folder_button.setIconSize(QSize(14, 14))
 
         # --- init/force mode buttons (row above image) ---
-        self.init_pao_button = QPushButton("PAO")
+        self.init_pao_button = QPushButton("Navier-Stokes")
         self.init_pao_button.setToolTip("Initilize with PAO spectrum")
-
-        self.init_pao_ekman_button = QPushButton("Ekman/Rayleigh")
-        self.init_pao_ekman_button.setToolTip("PAO init + Ekman/Rayleigh large-scale drag")
 
         self.init_highh_button = QPushButton("High-k forcing")
         self.init_highh_button.setToolTip("High-k spectral forcing + Ekman/Rayleigh large-scale drag")
@@ -280,7 +286,6 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self.folder_button.clicked.connect(self.on_folder_clicked)  # type: ignore[attr-defined]
 
         self.init_pao_button.clicked.connect(self.on_init_pao_clicked)  # type: ignore[attr-defined]
-        self.init_pao_ekman_button.clicked.connect(self.on_init_pao_ekman_clicked)  # type: ignore[attr-defined]
         self.init_highh_button.clicked.connect(self.on_init_highh_clicked)  # type: ignore[attr-defined]
         self.init_circle_button.clicked.connect(self.on_init_circle_clicked)  # type: ignore[attr-defined]
         self.init_rain_button.clicked.connect(self.on_init_rain_clicked)  # type: ignore[attr-defined]
@@ -362,14 +367,14 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         h0 = int(self.sim.py)
 
         if scale == 1.0:
-            return (w0, h0)
+            return w0, h0
 
         if scale < 1.0:
             up = int(round(1.0 / scale))
-            return (w0 * up, h0 * up)
+            return w0 * up, h0 * up
 
         s = int(scale)
-        return (max(1, w0 // s), max(1, h0 // s))
+        return max(1, w0 // s), max(1, h0 // s)
 
     @staticmethod
     def move_widgets(src_layout, dst_layout) -> None:
@@ -382,7 +387,6 @@ class MainWindow(QMainWindow, TurboLogicMixin):
     def _update_force_mode_buttons(self) -> None:
         mode_to_btn = {
             "pao": self.init_pao_button,
-            "pao_ekman": self.init_pao_ekman_button,
             "highh": self.init_highh_button,
             "circle": self.init_circle_button,
             "rain": self.init_rain_button,
@@ -405,7 +409,6 @@ class MainWindow(QMainWindow, TurboLogicMixin):
 
         row0 = QHBoxLayout()
         row0.addWidget(self.init_pao_button)
-        row0.addWidget(self.init_pao_ekman_button)
         row0.addWidget(self.init_highh_button)
         row0.addWidget(self.init_circle_button)
         row0.addWidget(self.init_rain_button)
@@ -553,7 +556,7 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         # 1) Update the image first
         self._update_image(self.sim.get_frame_pixels())
 
-        # 2) Compute new geometry from intended display size (NOT pixmap)
+        # 2) Compute new geometry from the intended display size (NOT pixmap)
         disp_w, disp_h = self._display_size_px()
         new_w = disp_w + 40
         new_h = disp_h + 120
@@ -581,7 +584,7 @@ class MainWindow(QMainWindow, TurboLogicMixin):
         self._sim_start_time = time.time()
         self._sim_start_iter = self.sim.get_iteration()
 
-        # IMPORTANT: keep current mode after changing N
+        # IMPORTANT: keep the current mode after changing N
         self.on_reset_clicked()
 
     def keyPressEvent(self, event) -> None:

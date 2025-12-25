@@ -332,7 +332,8 @@ class DnsSimulator:
         S.force_sigma = float(sigma)
 
     # ------------------------------------------------------------------
-    def _float_to_pixels(self, field: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def _float_to_pixels(field: np.ndarray) -> np.ndarray:
         """
         Map a float field to 8-bit grayscale [1,255], like the PGM dumper.
         """
@@ -341,7 +342,7 @@ class DnsSimulator:
         rng = fmax - fmin
 
         if abs(rng) <= 1.0e-12:
-            # essentially constant field → mid-grey
+            # essentially constant field → gray
             return np.full(field.shape, 128, dtype=np.uint8)
 
         norm = (field - fmin) / rng    # 0..1
@@ -355,8 +356,8 @@ class DnsSimulator:
         """
         Raw snapshot from Fortran, now using dns_frame with 3× scale-up.
         """
-        # For the pure-Python solver, we take component 'comp' from ur_full:
-        #   comp = 1,2,3  → ur_full[0,1,2]
+        # For the pure-Python solver, we take the component 'comp' from ur_full:
+        #   comp = 1,2,3 → ur_full[0,1,2]
         S = self.state
 
         idx = int(comp) - 1
@@ -434,14 +435,14 @@ class DnsSimulator:
     def get_frame_pixels(self) -> np.ndarray:
         """Used by the Qt app worker thread.
 
-        FIELD2PIX / dns_frame currently return 32-bit packed gray pixels
+        FIELD2PIX / dns_frame currently returns 32-bit packed gray pixels
         (0x00LLLLLL). Here we reduce that once to an 8-bit contiguous
         array so the GUI can push it straight into a QImage.
         """
         plane = self.make_pixels_component(self.current_var)
 
         # plane is already uint8 [0..255]; we keep the original logic
-        #   pixels32 & 0xFF  → pixels8
+        #   pixels32 & 0xFF → pixels8
         pixels32 = np.asarray(plane, dtype=np.uint32)
         pixels8 = (pixels32 & 0xFF).astype(np.uint8)
         return np.ascontiguousarray(pixels8)
