@@ -463,7 +463,7 @@ class TurboLogic:
         CFL = self.sim.cfl
         STEPS = self.sim.get_iteration()
 
-        folder = f"cupyturbo_{N}_{self.sci_no_plus(Re)}_{K0}_{CFL}_{STEPS}"
+        folder = f"cupystorm_{N}_{self.sci_no_plus(Re)}_{K0}_{CFL}_{STEPS}_{self._force_mode}"
 
         desktop = self._desktop_path()
 
@@ -711,3 +711,6 @@ class TurboLogic:
                 sigma=DEFAULT_FORCE_SIGMA,
                 active=False,
             )
+
+    def _desktop_path(self):
+        pass
