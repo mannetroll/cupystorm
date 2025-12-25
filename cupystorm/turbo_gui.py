@@ -229,7 +229,7 @@ class MainWindow(QMainWindow, TurboLogic):
         # K0 selector
         self.k0_combo = QComboBox()
         self.k0_combo.setToolTip("K: Initial energy peak wavenumber (K0)")
-        self.k0_combo.addItems(["1", "5", "10", "15", "25", "35", "50", "100"])
+        self.k0_combo.addItems(["1", "5", "10", "15", "20", "25", "35", "50", "100"])
         self.k0_combo.setCurrentText(str(int(self.sim.k0)))
 
         # Colormap selector
@@ -249,13 +249,13 @@ class MainWindow(QMainWindow, TurboLogic):
         # Steps selector
         self.steps_combo = QComboBox()
         self.steps_combo.setToolTip("S: Max steps before reset/stop")
-        self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "3E5", "1E6"])
+        self.steps_combo.addItems(["2000", "5000", "10000", "25000", "50000", "1E5", "3E5", "1E6", "1E7"])
         self.steps_combo.setCurrentText("1E6")
 
         # Update selector
         self.update_combo = QComboBox()
         self.update_combo.setToolTip("U: Update intervall")
-        self.update_combo.addItems(["2", "5", "10", "20", "50", "100", "1000"])
+        self.update_combo.addItems(["2", "5", "10", "20", "50", "100", "200", "1000"])
         self.update_combo.setCurrentText("20")
 
         self.auto_reset_checkbox = QCheckBox()
