@@ -577,7 +577,7 @@ def dns_pao_host_init(S: DnsState):
     K0 = np.float32(S.K0)
     NORM = PI * K0 * K0
 
-    print(f" PAO initialization started: {N}, K0={int(K0)}, Re={int(S.Re)}")
+    print(f" PAO initialization started: N={N}, K0={int(K0)}, Re={int(S.Re)}")
 
     # ------------------------------------------------------------------
     # Build ALFA(N/2) and GAMMA(N)  (Fortran DALFA, DGAMMA, E1, E3)
