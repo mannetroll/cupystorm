@@ -1720,7 +1720,11 @@ def run_dns(
         # ----------------------------------------
         CFLM = compute_cflm(S)
         # CUDA-style initial DT: CFLM * DT * PI = CFLNUM  →  DT = CFLNUM / (CFLM * PI)
-        S.dt = S.cflnum / (CFLM * math.pi)
+        CFLM = compute_cflm(S)
+        if CFLM == 0.0:
+            S.dt = 0.01
+        else:
+            S.dt = S.cflnum / (CFLM * math.pi)
         S.cn = 1.0
         S.cnm1 = 0.0
 
