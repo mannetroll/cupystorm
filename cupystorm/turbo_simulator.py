@@ -31,6 +31,7 @@ from contextlib import nullcontext
 import time
 import math
 import sys
+from time import perf_counter
 from dataclasses import dataclass
 from typing import Literal
 
@@ -564,6 +565,7 @@ def dns_zero_host_init(S: DnsState) -> None:
     S.force_amp = 0.0
 
 def dns_pao_host_init(S: DnsState):
+    start = perf_counter()
     xp = S.xp
     N = S.NX
     NE = S.NZ
@@ -792,7 +794,9 @@ def dns_pao_host_init(S: DnsState):
             for c in range(2):
                 UC_full_host[x, z, c] = UR[x, z, c]
 
-    print(f" PAO initialization OK. VISC={float(S.visc):12.10f}")
+    print(f" PAO initialization OK: VISC={float(S.visc):12.10f}")
+    elapsed = perf_counter() - start
+    print(f" DNS initialization took: {elapsed:.3f} seconds")
 
     # ------------------------------------------------------------------
     # Move alfa/gamma/UC/UC_full into DnsState (xp backend, SoA layout)
