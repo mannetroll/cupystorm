@@ -1,5 +1,6 @@
 # turbo_gui.py
 import time
+import math
 from typing import Optional
 
 from PySide6.QtCore import QSize, QTimer, Qt, QStandardPaths, Signal
@@ -216,7 +217,7 @@ class MainWindow(QMainWindow, TurboLogic):
         self.n_combo = QComboBox()
         self.n_combo.setToolTip("N: Grid Size (N)")
         self.n_combo.addItems(
-            ["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144", "7776"]
+            ["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144", "7776", "9216"]
         )
         self.n_combo.setCurrentText(str(self.sim.N))
 
@@ -344,25 +345,32 @@ class MainWindow(QMainWindow, TurboLogic):
     def _display_scale(self) -> float:
         """
         Must match _upscale_downscale_u8() scale logic.
-        """
-        N = self.sim.N
 
-        if N <= 128:
-            return 0.25
-        if N <= 256:
-            return 0.5
-        if N < 768:
-            return 1.0
-        if N <= 1024:
-            return 2.0
-        if N <= 3072:
-            return 4.0
-        if N <= 4096:
-            return 6.0
-        if N <= 6199:
-            return 9.0
-        else:
-            return 12.0
+        Convention (based on your existing mapping code):
+          - scale < 1.0  => upscale by (1/scale) (integer)
+          - scale > 1.0  => downscale by scale   (integer)
+
+        Goal: displayed_size ~= N / down <= max_h   (for big N)
+              displayed_size ~= N * up  <= max_h   (for small N)
+        """
+        N = int(self.sim.N)
+
+        # MacBook Pro window height you mentioned:
+        screen_h = 1024
+
+        # Leave room for top buttons, status bar, margins, etc.
+        # Tune this once if you want it a bit larger/smaller on screen.
+        ui_margin = 320
+        max_h = max(128, screen_h - ui_margin)
+
+        if N >= max_h:
+            down = int(math.ceil(N / max_h))  # integer downscale so N/down <= max_h
+            return float(down)
+
+        up = int(math.floor(max_h / N))  # integer upscale so N*up <= max_h
+        if up < 1:
+            up = 1
+        return 1.0 / float(up)
 
     def _display_size_px(self) -> tuple[int, int]:
         scale = self._display_scale()
