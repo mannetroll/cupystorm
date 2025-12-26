@@ -217,7 +217,7 @@ class MainWindow(QMainWindow, TurboLogic):
         self.n_combo = QComboBox()
         self.n_combo.setToolTip("N: Grid Size (N)")
         self.n_combo.addItems(
-            ["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144", "7776", "9216"]
+            ["128", "192", "256", "384", "512", "768", "1024", "2048", "3072", "4096", "6144", "7776", "8192", "9216", "16384", "32768"]
         )
         self.n_combo.setCurrentText(str(self.sim.N))
 
