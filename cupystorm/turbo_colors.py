@@ -1,272 +1,1 @@
-# turbo_colors.py
-import colorsys
-
-import numpy as np
-from PySide6.QtGui import qRgb
-
-
-# Simple helper: build a 256x3 uint8 LUT from color stops in 0..1
-# stops: list of (pos, (r,g,b)) with pos in [0,1], r,g,b in [0,255]
-def _make_lut_from_stops(stops, size: int = 256) -> np.ndarray:
-    stops = sorted(stops, key=lambda s: s[0])
-    lut = np.zeros((size, 3), dtype=np.uint8)
-
-    positions = [int(round(p * (size - 1))) for p, _ in stops]
-    colors = [np.array(c, dtype=np.float32) for _, c in stops]
-
-    for i in range(len(stops) - 1):
-        x0 = positions[i]
-        x1 = positions[i + 1]
-        c0 = colors[i]
-        c1 = colors[i + 1]
-
-        if x1 <= x0:
-            lut[x0] = c0.astype(np.uint8)
-            continue
-
-        length = x1 - x0
-        for j in range(length):
-            t = j / float(length)
-            c = (1.0 - t) * c0 + t * c1
-            lut[x0 + j] = c.astype(np.uint8)
-
-    # last entry
-    lut[positions[-1]] = colors[-1].astype(np.uint8)
-    return lut
-
-
-def _make_gray_lut() -> np.ndarray:
-    lut = np.zeros((256, 3), dtype=np.uint8)
-    for i in range(256):
-        lut[i] = (i, i, i)
-    return lut
-
-
-def _make_fire_lut() -> np.ndarray:
-    """Approximate 'fire' palette via HSL ramp: red → yellow, brightening."""
-    lut = np.zeros((256, 3), dtype=np.uint8)
-    for x in range(256):
-        # Hue 0..85 degrees
-        h_deg = 85.0 * (x / 255.0)
-        h = h_deg / 360.0
-        s = 1.0
-        # Lightness: 0..1 up to mid, then flat
-        l = min(1.0, x / 128.0)
-        r, g, b = colorsys.hls_to_rgb(h, l, s)
-        lut[x] = (int(r * 255), int(g * 255), int(b * 255))
-    return lut
-
-
-def _make_doom_fire_lut() -> np.ndarray:
-    """Classic Doom fire palette approximated as 256 RGB colors."""
-    key_colors = np.array([
-        [0, 0, 0],
-        [7, 7, 7],
-        [31, 7, 7],
-        [47, 15, 7],
-        [71, 15, 7],
-        [87, 23, 7],
-        [103, 31, 7],
-        [119, 31, 7],
-        [143, 39, 7],
-        [159, 47, 7],
-        [175, 63, 7],
-        [191, 71, 7],
-        [199, 71, 7],
-        [223, 79, 7],
-        [223, 87, 7],
-        [223, 87, 7],
-        [215, 95, 7],
-        [215, 95, 7],
-        [215, 103, 15],
-        [207, 111, 15],
-        [207, 119, 15],
-        [207, 127, 15],
-        [207, 135, 23],
-        [199, 135, 23],
-        [199, 143, 23],
-        [199, 151, 31],
-        [191, 159, 31],
-        [191, 159, 31],
-        [191, 167, 39],
-        [191, 167, 39],
-        [191, 175, 47],
-        [183, 175, 47],
-        [183, 183, 47],
-        [183, 183, 55],
-        [207, 207, 111],
-        [223, 223, 159],
-        [239, 239, 199],
-        [255, 255, 255],
-    ], dtype=np.uint8)
-
-    stops = []
-    n_keys = key_colors.shape[0]
-    for i in range(n_keys):
-        pos = i / (n_keys - 1)
-        stops.append((pos, key_colors[i].tolist()))
-    return _make_lut_from_stops(stops)
-
-
-def _make_viridis_lut() -> np.ndarray:
-    # Approximate viridis with a few key colors from the official palette
-    stops = [
-        (0.0, (68, 1, 84)),
-        (0.25, (59, 82, 139)),
-        (0.50, (33, 145, 140)),
-        (0.75, (94, 201, 98)),
-        (1.0, (253, 231, 37)),
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_inferno_lut() -> np.ndarray:
-    stops = [
-        (0.0, (0, 0, 4)),
-        (0.25, (87, 15, 109)),
-        (0.50, (187, 55, 84)),
-        (0.75, (249, 142, 8)),
-        (1.0, (252, 255, 164)),
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_ocean_lut() -> np.ndarray:
-    # Ocean: deep-blue → blue → cyan → turquoise → pale-aqua
-    stops = [
-        (0.0, (0, 5, 30)),  # deep navy
-        (0.25, (0, 60, 125)),  # rich ocean blue
-        (0.50, (0, 140, 190)),  # cyan-blue mix
-        (0.75, (0, 200, 175)),  # turquoise
-        (1.0, (180, 245, 240)),  # pale aqua
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_cividis_lut() -> np.ndarray:
-    stops = [
-        (0.00, (0, 34, 77)),
-        (0.25, (0, 68, 117)),
-        (0.50, (60, 111, 130)),
-        (0.75, (147, 147, 95)),
-        (1.00, (250, 231, 33)),
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_jet_lut() -> np.ndarray:
-    stops = [
-        (0.00, (0, 0, 131)),  # dark blue
-        (0.35, (0, 255, 255)),  # cyan
-        (0.66, (255, 255, 0)),  # yellow
-        (1.00, (128, 0, 0)),  # dark red
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_coolwarm_lut() -> np.ndarray:
-    stops = [
-        (0.00, (59, 76, 192)),  # deep blue
-        (0.25, (127, 150, 203)),
-        (0.50, (217, 217, 217)),  # near white (center)
-        (0.75, (203, 132, 123)),
-        (1.00, (180, 4, 38)),  # deep red
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_rdbu_lut() -> np.ndarray:
-    stops = [
-        (0.00, (103, 0, 31)),  # dark red
-        (0.25, (178, 24, 43)),
-        (0.50, (247, 247, 247)),  # white center
-        (0.75, (33, 102, 172)),
-        (1.00, (5, 48, 97)),  # dark blue
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_plasma_lut() -> np.ndarray:
-    stops = [
-        (0.0, (13, 8, 135)),
-        (0.25, (126, 3, 167)),
-        (0.50, (203, 71, 119)),
-        (0.75, (248, 149, 64)),
-        (1.0, (240, 249, 33)),
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_magma_lut() -> np.ndarray:
-    stops = [
-        (0.0, (0, 0, 4)),
-        (0.25, (73, 18, 99)),
-        (0.50, (150, 50, 98)),
-        (0.75, (226, 102, 73)),
-        (1.0, (252, 253, 191)),
-    ]
-    return _make_lut_from_stops(stops)
-
-
-def _make_turbo_lut() -> np.ndarray:
-    # Approximate Google's Turbo colormap with a few key stops.
-    stops = [
-        (0.0, (48, 18, 59)),
-        (0.25, (31, 120, 180)),
-        (0.50, (78, 181, 75)),
-        (0.75, (241, 208, 29)),
-        (1.0, (133, 32, 26)),
-    ]
-    return _make_lut_from_stops(stops)
-
-
-GRAY_LUT = _make_gray_lut()
-INFERNO_LUT = _make_inferno_lut()
-OCEAN_LUT = _make_ocean_lut()
-VIRIDIS_LUT = _make_viridis_lut()
-PLASMA_LUT = _make_plasma_lut()
-MAGMA_LUT = _make_magma_lut()
-TURBO_LUT = _make_turbo_lut()
-FIRE_LUT = _make_fire_lut()
-DOOM_FIRE_LUT = _make_doom_fire_lut()
-CIVIDIS_LUT = _make_cividis_lut()
-JET_LUT = _make_jet_lut()
-COOLWARM_LUT = _make_coolwarm_lut()
-RDBU_LUT = _make_rdbu_lut()
-
-COLOR_MAPS = {
-    "Gray": GRAY_LUT,
-    "Inferno": INFERNO_LUT,
-    "Ocean": OCEAN_LUT,
-    "Viridis": VIRIDIS_LUT,
-    "Plasma": PLASMA_LUT,
-    "Magma": MAGMA_LUT,
-    "Turbo": TURBO_LUT,
-    "Fire": FIRE_LUT,
-    "Doom": DOOM_FIRE_LUT,
-    "Cividis": CIVIDIS_LUT,
-    "Jet": JET_LUT,
-    "Coolwarm": COOLWARM_LUT,
-    "RdBu": RDBU_LUT,
-}
-
-DEFAULT_CMAP_NAME = "Ocean"
-
-# ----------------------------------------------------------------------
-# Option A: Qt Indexed8 + palette tables (avoid expanding to RGB in NumPy)
-# ----------------------------------------------------------------------
-QT_COLOR_TABLES = {
-    name: [qRgb(int(rgb[0]), int(rgb[1]), int(rgb[2])) for rgb in lut]
-    for name, lut in COLOR_MAPS.items()
-}
-
-DEFAULT_FORCE_AMP = 0.5
-DEFAULT_FORCE_SIGMA = 12.0
-QT_GRAY_TABLE = [qRgb(i, i, i) for i in range(256)]
-
-# ----------------------------------------------------------------------
-# Display normalization (reduces flicker when the underlying dynamic range
-# changes quickly, e.g. in Rain mode).
-# ----------------------------------------------------------------------
-DISPLAY_NORM_ENABLED = True
-DISPLAY_NORM_K_STD = 2.5          # map [mu - k*sigma, mu + k*sigma] -> [0,255]
+# turbo_colors.pyimport colorsysimport numpy as npfrom PySide6.QtGui import qRgb# Simple helper: build a 256x3 uint8 LUT from color stops in 0..1# stops: list of (pos, (r,g,b)) with pos in [0,1], r,g,b in [0,255]def _make_lut_from_stops(stops, size: int = 256) -> np.ndarray:    stops = sorted(stops, key=lambda s: s[0])    lut = np.zeros((size, 3), dtype=np.uint8)    positions = [int(round(p * (size - 1))) for p, _ in stops]    colors = [np.array(c, dtype=np.float32) for _, c in stops]    for i in range(len(stops) - 1):        x0 = positions[i]        x1 = positions[i + 1]        c0 = colors[i]        c1 = colors[i + 1]        if x1 <= x0:            lut[x0] = c0.astype(np.uint8)            continue        length = x1 - x0        for j in range(length):            t = j / float(length)            c = (1.0 - t) * c0 + t * c1            lut[x0 + j] = c.astype(np.uint8)    # last entry    lut[positions[-1]] = colors[-1].astype(np.uint8)    return lutdef _make_gray_lut() -> np.ndarray:    lut = np.zeros((256, 3), dtype=np.uint8)    for i in range(256):        lut[i] = (i, i, i)    return lutdef _make_fire_lut() -> np.ndarray:    """Approximate 'fire' palette via HSL ramp: red → yellow, brightening."""    lut = np.zeros((256, 3), dtype=np.uint8)    for x in range(256):        # Hue 0..85 degrees        h_deg = 85.0 * (x / 255.0)        h = h_deg / 360.0        s = 1.0        # Lightness: 0..1 up to mid, then flat        l = min(1.0, x / 128.0)        r, g, b = colorsys.hls_to_rgb(h, l, s)        lut[x] = (int(r * 255), int(g * 255), int(b * 255))    return lutdef _make_doom_fire_lut() -> np.ndarray:    """Classic Doom fire palette approximated as 256 RGB colors."""    key_colors = np.array([        [0, 0, 0],        [7, 7, 7],        [31, 7, 7],        [47, 15, 7],        [71, 15, 7],        [87, 23, 7],        [103, 31, 7],        [119, 31, 7],        [143, 39, 7],        [159, 47, 7],        [175, 63, 7],        [191, 71, 7],        [199, 71, 7],        [223, 79, 7],        [223, 87, 7],        [223, 87, 7],        [215, 95, 7],        [215, 95, 7],        [215, 103, 15],        [207, 111, 15],        [207, 119, 15],        [207, 127, 15],        [207, 135, 23],        [199, 135, 23],        [199, 143, 23],        [199, 151, 31],        [191, 159, 31],        [191, 159, 31],        [191, 167, 39],        [191, 167, 39],        [191, 175, 47],        [183, 175, 47],        [183, 183, 47],        [183, 183, 55],        [207, 207, 111],        [223, 223, 159],        [239, 239, 199],        [255, 255, 255],    ], dtype=np.uint8)    stops = []    n_keys = key_colors.shape[0]    for i in range(n_keys):        pos = i / (n_keys - 1)        stops.append((pos, key_colors[i].tolist()))    return _make_lut_from_stops(stops)def _make_viridis_lut() -> np.ndarray:    # Approximate viridis with a few key colors from the official palette    stops = [        (0.0, (68, 1, 84)),        (0.25, (59, 82, 139)),        (0.50, (33, 145, 140)),        (0.75, (94, 201, 98)),        (1.0, (253, 231, 37)),    ]    return _make_lut_from_stops(stops)def _make_inferno_lut() -> np.ndarray:    stops = [        (0.0, (0, 0, 4)),        (0.25, (87, 15, 109)),        (0.50, (187, 55, 84)),        (0.75, (249, 142, 8)),        (1.0, (252, 255, 164)),    ]    return _make_lut_from_stops(stops)def _make_ocean_lut() -> np.ndarray:    # Ocean: deep-blue → blue → cyan → turquoise → pale-aqua    stops = [        (0.0, (0, 5, 30)),  # deep navy        (0.25, (0, 60, 125)),  # rich ocean blue        (0.50, (0, 140, 190)),  # cyan-blue mix        (0.75, (0, 200, 175)),  # turquoise        (1.0, (180, 245, 240)),  # pale aqua    ]    return _make_lut_from_stops(stops)def _make_cividis_lut() -> np.ndarray:    stops = [        (0.00, (0, 34, 77)),        (0.25, (0, 68, 117)),        (0.50, (60, 111, 130)),        (0.75, (147, 147, 95)),        (1.00, (250, 231, 33)),    ]    return _make_lut_from_stops(stops)def _make_jet_lut() -> np.ndarray:    stops = [        (0.00, (0, 0, 131)),  # dark blue        (0.35, (0, 255, 255)),  # cyan        (0.66, (255, 255, 0)),  # yellow        (1.00, (128, 0, 0)),  # dark red    ]    return _make_lut_from_stops(stops)def _make_coolwarm_lut() -> np.ndarray:    stops = [        (0.00, (59, 76, 192)),  # deep blue        (0.25, (127, 150, 203)),        (0.50, (217, 217, 217)),  # near white (center)        (0.75, (203, 132, 123)),        (1.00, (180, 4, 38)),  # deep red    ]    return _make_lut_from_stops(stops)def _make_rdbu_lut() -> np.ndarray:    stops = [        (0.00, (103, 0, 31)),  # dark red        (0.25, (178, 24, 43)),        (0.50, (247, 247, 247)),  # white center        (0.75, (33, 102, 172)),        (1.00, (5, 48, 97)),  # dark blue    ]    return _make_lut_from_stops(stops)def _make_plasma_lut() -> np.ndarray:    stops = [        (0.0, (13, 8, 135)),        (0.25, (126, 3, 167)),        (0.50, (203, 71, 119)),        (0.75, (248, 149, 64)),        (1.0, (240, 249, 33)),    ]    return _make_lut_from_stops(stops)def _make_magma_lut() -> np.ndarray:    stops = [        (0.0, (0, 0, 4)),        (0.25, (73, 18, 99)),        (0.50, (150, 50, 98)),        (0.75, (226, 102, 73)),        (1.0, (252, 253, 191)),    ]    return _make_lut_from_stops(stops)def _make_turbo_lut() -> np.ndarray:    # Approximate Google's Turbo colormap with a few key stops.    stops = [        (0.0, (48, 18, 59)),        (0.25, (31, 120, 180)),        (0.50, (78, 181, 75)),        (0.75, (241, 208, 29)),        (1.0, (133, 32, 26)),    ]    return _make_lut_from_stops(stops)GRAY_LUT = _make_gray_lut()INFERNO_LUT = _make_inferno_lut()OCEAN_LUT = _make_ocean_lut()VIRIDIS_LUT = _make_viridis_lut()PLASMA_LUT = _make_plasma_lut()MAGMA_LUT = _make_magma_lut()TURBO_LUT = _make_turbo_lut()FIRE_LUT = _make_fire_lut()DOOM_FIRE_LUT = _make_doom_fire_lut()CIVIDIS_LUT = _make_cividis_lut()JET_LUT = _make_jet_lut()COOLWARM_LUT = _make_coolwarm_lut()RDBU_LUT = _make_rdbu_lut()COLOR_MAPS = {    "Gray": GRAY_LUT,    "Inferno": INFERNO_LUT,    "Ocean": OCEAN_LUT,    "Viridis": VIRIDIS_LUT,    "Plasma": PLASMA_LUT,    "Magma": MAGMA_LUT,    "Turbo": TURBO_LUT,    "Fire": FIRE_LUT,    "Doom": DOOM_FIRE_LUT,    "Cividis": CIVIDIS_LUT,    "Jet": JET_LUT,    "Coolwarm": COOLWARM_LUT,    "RdBu": RDBU_LUT,}DEFAULT_CMAP_NAME = "Ocean"# ----------------------------------------------------------------------# Option A: Qt Indexed8 + palette tables (avoid expanding to RGB in NumPy)# ----------------------------------------------------------------------QT_COLOR_TABLES = {    name: [qRgb(int(rgb[0]), int(rgb[1]), int(rgb[2])) for rgb in lut]    for name, lut in COLOR_MAPS.items()}DEFAULT_FORCE_AMP = 0.5DEFAULT_FORCE_SIGMA = 12.0QT_GRAY_TABLE = [qRgb(i, i, i) for i in range(256)]# ----------------------------------------------------------------------# Display normalization (reduces flicker when the underlying dynamic range# changes quickly, e.g. in Rain mode).# ----------------------------------------------------------------------DISPLAY_NORM_ENABLED = TrueDISPLAY_NORM_K_STD = 2.5          # map [mu - k*sigma, mu + k*sigma] -> [0,255]
