@@ -126,7 +126,7 @@ Or let the backend auto-detect:
 
 ## The DNS with CuPy (4096 x 4096)
 
-![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window4096.png)
+![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window7776.png)
 
 
 ## Profiling
