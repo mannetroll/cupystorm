@@ -124,7 +124,7 @@ Or let the backend auto-detect:
        $ uv run python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 auto
 
 
-## The DNS with CuPy (4096 x 4096)
+## The DNS with CuPy (7776 x 7776)
 
 ![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window7776.png)
 
