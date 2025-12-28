@@ -15,10 +15,10 @@ The solver includes:
 - **Crank–Nicolson** time integration
 - **CFL-based adaptive time stepping** (Δt updated from the current flow state)
 
-### cupystormive GUI (PySide6)
-Run an cupystormive window that:
+### cupystorm GUI (PySide6)
+Run an cupystorm window that:
 
-- Displays the flow field as a live image (fast `Indexed8` palette rendering)
+- Displays the flow field as a live image (fast Indexed8 palette rendering)
 - Lets you switch displayed variable:
   - **U**, **V** (velocity components)
   - **K** (kinetic energy)
