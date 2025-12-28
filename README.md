@@ -171,12 +171,18 @@ For a terminal-only summary:
 
     $ scalene --cli --cpu -m cupystorm.turbo_simulator 256 10000 10 201 0.75 cpu
 
-## one-liner
+## one-liner SciPy
 
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
 $ uv cache clean mannetroll-cupystorm
 $ uv run --python 3.13 --with mannetroll-cupystorm==0.1.1 python -m cupystorm.turbo_main
+```
+
+## one-liner CuPy
+
+```
+$ uv run --python 3.13 --with mannetroll-cupystorm[cuda]==0.1.1 python -m cupystorm.turbo_main
 ```
 
 ## License
