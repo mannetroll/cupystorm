@@ -176,7 +176,7 @@ For a terminal-only summary:
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
 $ uv cache clean mannetroll-cupystorm
-$ uv run --python 3.13 --with mannetroll-cupystorm==0.1.0 python -m cupystorm.turbo_main
+$ uv run --python 3.13 --with mannetroll-cupystorm==0.1.1 python -m cupystorm.turbo_main
 ```
 
 ## License
