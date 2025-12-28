@@ -109,7 +109,7 @@ On a CUDA machine (e.g. RTX 3090):
 2. Install CuPy into the uv environment:
 
        $ uv sync
-       $ uv pip install cupy
+       $ uv pip install cupy-cuda13x
 
 3. Verify that CuPy sees the GPU:
 
