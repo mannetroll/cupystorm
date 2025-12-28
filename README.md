@@ -104,7 +104,7 @@ On a CUDA machine (e.g. RTX 3090):
 
 1. Check that the driver/CUDA are available:
 
-       $ nvidia-smi | head -n 3
+       $ nvidia-smi
 
 2. Install CuPy into the uv environment:
 
