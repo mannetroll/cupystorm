@@ -11,7 +11,7 @@ authors = [
 ]
 
 dependencies = [
-    "cupy-cuda13x>=13.6.0 ; sys_platform == 'win32'",
+    "cupy-cuda13x>=13.6.0 ; sys_platform != 'darwin'"
     "numpy>=2.3.5",
     "pillow>=12.0.0",
     "scipy>=1.16.3",
