@@ -188,4 +188,3 @@ $ uv run --python 3.13 --with "mannetroll-cupystorm[cuda]==0.1.1" -- cupystorm
 ## License
 
 Copyright © Mannetroll
-See the project repository for license details.
