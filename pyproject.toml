@@ -19,7 +19,11 @@ dependencies = [
 
 # Optional GPU extra
 [project.optional-dependencies]
-cuda = ["cupy-cuda13x>=13.6.0"]
+cuda = [
+  "cupy-cuda13x>=13.6.0; sys_platform != 'darwin'",
+  "fastrlock>=0.8",
+]
+
 
 [project.scripts]
 cupystorm = "cupystorm.turbo_main:main"
