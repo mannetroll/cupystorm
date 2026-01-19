@@ -11,7 +11,7 @@ set -euo pipefail
 #
 # Usage:
 #   1. Build the app:
-#        uv run pyinstaller cupystorm.spec
+#        uv run pyinstaller macos.spec
 #   2. Create DMG:
 #        ./make_dmg.sh
 #
@@ -27,7 +27,7 @@ VOLNAME="cupystorm"
 # ----------------------------------------------------------
 if [ ! -d "${APP_BUNDLE}" ]; then
     echo "ERROR: ${APP_BUNDLE} does not exist."
-    echo "Run:  uv run pyinstaller cupystorm.spec"
+    echo "Run:  uv run pyinstaller macos.spec"
     exit 1
 fi
 
