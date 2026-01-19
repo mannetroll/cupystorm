@@ -7,6 +7,21 @@ It supports:
 - **SciPy / NumPy** for CPU runs
 - **CuPy** (optional) for GPU acceleration on CUDA devices (e.g. RTX 3090)
 
+## one-liner CPU/SciPy
+
+```
+$ curl -LsSf https://astral.sh/uv/install.sh | sh
+$ uv cache clean mannetroll-cupystorm
+$ uv run --python 3.13 --with "mannetroll-cupystorm==0.1.2" turbulence
+```
+
+## one-liner GPU/CuPy
+
+```
+$ uv run --python 3.13 --with "mannetroll-cupystorm[cuda]==0.1.2" turbulence
+```
+
+
 ### DNS solver
 The solver includes:
 
@@ -68,8 +83,7 @@ To keep the GUI responsive for large grids, the displayed image is automatically
 From the project root:
 
     uv sync
-    uv run python -m cupystorm.turbo_main
-
+    uv run turbulence
 
 ## The DNS with SciPy (256 x 256) Rain
 
@@ -109,7 +123,7 @@ On a CUDA machine (e.g. RTX 3090):
 2. Install CuPy into the uv environment:
 
        $ uv sync --extra cuda
-       $ uv run -- cupystorm
+       $ uv run turbulence
 
 3. Verify that CuPy sees the GPU:
 
@@ -142,7 +156,6 @@ Inspect the results:
     turbo_simulator.prof% sort time
     turbo_simulator.prof% stats 20
 
-
 ### GUI profiling with SnakeViz
 
 Install SnakeViz:
@@ -153,17 +166,15 @@ Visualize the profile:
 
     $ snakeviz turbo_simulator.prof
 
-
 ### Memory & CPU profiling with Scalene (GUI)
 
 Install Scalene:
 
     $ uv pip install "scalene==1.5.55"
 
-Run with GUI report:
+Run with a GUI report:
 
     $ scalene -m cupystorm.turbo_simulator 256 10000 10 201 0.75 cpu
-
 
 ### Memory & CPU profiling with Scalene (CLI only)
 
@@ -171,20 +182,6 @@ For a terminal-only summary:
 
     $ scalene --cli --cpu -m cupystorm.turbo_simulator 256 10000 10 201 0.75 cpu
 
-## one-liner CPU/SciPy
-
-```
-$ curl -LsSf https://astral.sh/uv/install.sh | sh
-$ uv cache clean mannetroll-cupystorm
-$ uv run --python 3.13 --with "mannetroll-cupystorm==0.1.1" turbulence
-```
-
-## one-liner GPU/CuPy
-
-```
-$ uv run --python 3.13 --with "mannetroll-cupystorm[cuda]==0.1.1" turbulence
-```
-
 ## License
 
-Copyright © Mannetroll
+Copyright © 2026 Mannetroll
