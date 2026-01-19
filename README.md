@@ -86,15 +86,19 @@ From the project root:
     uv sync
     uv run turbulence
 
-## Rain (256 x 256)
+## High-k spectral forcing + Ekman/Rayleigh large-scale drag (256 x 256) CuPy, 1M iterations.
+
+![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wekman.png)
+
+## Rain (256 x 256) SciPy
 
 ![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wrain.png)
 
-## Circle (256 x 256)
+## Circle (256 x 256) SciPy
 
 ![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wcircle.png)
 
-## Mouse (256 x 256)
+## Mouse (256 x 256) SciPy
 
 ![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wmouse.png)
 
