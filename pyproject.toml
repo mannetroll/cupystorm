@@ -29,6 +29,7 @@ cuda = [
 [project.scripts]
 turbulence = "cupystorm.turbo_main:main"
 sim = "cupystorm.turbo_simulator:main"
+wrapper = "cupystorm.turbo_wrapper:main"
 
 # Package discovery
 [tool.setuptools.packages.find]
