@@ -86,8 +86,8 @@ From the project root:
     uv sync
     uv run turbulence
 
-## High-k spectral forcing + Ekman/Rayleigh large-scale drag (256 x 256) CuPy
-### The flow remains fully turbulent after 1,000,000 iterations.
+## High-k spectral forcing + Ekman/Rayleigh large-scale drag
+### The flow remains fully turbulent after 1,000,000 iterations (256 x 256) CuPy
 
 ![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wekman.png)
 
