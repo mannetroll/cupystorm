@@ -1,5 +1,7 @@
 # 2D Turbulence Simulation (SciPy / CuPy)
 
+Source code: https://github.com/mannetroll/cupystorm
+
 A Direct Numerical Simulation (DNS) code for **2D homogeneous incompressible turbulence**
 
 It supports:
@@ -99,7 +101,7 @@ From the project root:
 
 ### Full CLI
 
-    $ python -m cupystorm.turbo_simulator N Re K0 STEPS CFL BACKEND
+    $ python -m cupystorm.turbo_simulator N Re K0 STEPS CFL BACKEND [MODE]
 
 Where:
 
@@ -109,6 +111,7 @@ Where:
 - STEPS   — number of time steps
 - CFL     — target CFL number (e.g. 0.75)
 - BACKEND — "cpu", "gpu", or "auto"
+- MODE    — "pao" | "highh" | "rain" | "circle" | "mouse"
 
 Examples:
 
