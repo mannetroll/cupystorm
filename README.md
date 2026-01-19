@@ -105,13 +105,13 @@ From the project root:
 
 Where:
 
-- N       — grid size (e.g. 256, 512)
-- Re      — Reynolds number (e.g. 10000)
-- K0      — peak wavenumber of the energy spectrum
-- STEPS   — number of time steps
-- CFL     — target CFL number (e.g. 0.75)
-- BACKEND — "cpu", "gpu", or "auto"
-- MODE    — "pao" | "highh" | "rain" | "circle" | "mouse"
+- N        — grid size
+- Re       — Reynolds number
+- K0       — peak wavenumber of the energy spectrum
+- STEPS    — number of time steps
+- CFL      — target CFL number
+- BACKEND  — "cpu", "gpu", or "auto"
+- MODE     — "pao" | "highh" | "rain" | "circle" | "mouse"
 
 Examples:
 
@@ -123,7 +123,9 @@ Examples:
 
 ## Enabling GPU with CuPy (CUDA 13)
 
-On a CUDA machine (e.g. RTX 3090):
+On a CUDA machine (e.g. RTX 5090):
+
+Download: https://developer.nvidia.com/cuda-downloads
 
 1. Check that the driver/CUDA are available:
 
