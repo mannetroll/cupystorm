@@ -21,7 +21,6 @@ $ uv run --python 3.13 --with "mannetroll-cupystorm==0.1.2" turbulence
 $ uv run --python 3.13 --with "mannetroll-cupystorm[cuda]==0.1.2" turbulence
 ```
 
-
 ### DNS solver
 The solver includes:
 
@@ -89,7 +88,6 @@ From the project root:
 
 ![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window.png)
 
-
 ### Full CLI
 
     $ python -m cupystorm.turbo_simulator N Re K0 STEPS CFL BACKEND
@@ -137,11 +135,9 @@ Or let the backend auto-detect:
 
        $ uv run python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 auto
 
-
 ## The DNS with CuPy (7776 x 7776)
 
 ![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window7776.png)
-
 
 ## Profiling
 
