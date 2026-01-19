@@ -22,7 +22,7 @@ dependencies = [
 [project.optional-dependencies]
 cuda = [
   "cupy-cuda13x>=13.6.0; sys_platform != 'darwin'",
-  "fastrlock>=0.8",
+  "fastrlock>=0.8; sys_platform != 'darwin'",
 ]
 
 
