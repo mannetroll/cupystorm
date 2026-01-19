@@ -109,7 +109,6 @@ Examples:
     # Auto-select backend (GPU if CuPy + CUDA are available)
     $ python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 auto
 
-
 ## Enabling GPU with CuPy (CUDA 13)
 
 On a CUDA machine (e.g. RTX 3090):
