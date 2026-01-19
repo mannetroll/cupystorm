@@ -84,9 +84,18 @@ From the project root:
     uv sync
     uv run turbulence
 
-## The DNS with SciPy (256 x 256) Rain
+## Rain (256 x 256)
 
-![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window.png)
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wrain.png)
+
+## Circle (256 x 256)
+
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wcircle.png)
+
+## Mouse (256 x 256)
+
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wmouse.png)
+
 
 ### Full CLI
 
@@ -134,9 +143,9 @@ Or let the backend auto-detect:
 
        $ uv run python -m cupystorm.turbo_simulator 256 10000 10 1001 0.75 auto
 
-## The DNS with CuPy (7776 x 7776)
+## The DNS with CuPy (7776 x 7776) Navier-Stokes
 
-![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/main/window7776.png)
+![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/window7776.png)
 
 ## Profiling
 
