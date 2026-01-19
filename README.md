@@ -50,7 +50,7 @@ Run an cupystorm window that:
   - GUI update interval (how often to refresh the display)
 - Includes force/initialization modes:
   - **Navier-Stokes**: PAO spectrum init
-  - **High-k forcing**: High-k spectral forcing + Ekman/Rayleigh large-scale drag
+  - **High-k + Ekman/Rayleigh**: High-k spectral forcing + Ekman/Rayleigh large-scale drag
   - **Rain**: random “kick” forcing events
   - **Circle**: a forcing point moves on a circular trajectory (continuous forcing)
   - **Mouse**: apply forcing by click/drag in the image
