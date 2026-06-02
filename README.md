@@ -14,13 +14,13 @@ It supports:
 ```
 $ curl -LsSf https://astral.sh/uv/install.sh | sh
 $ uv cache clean mannetroll-cupystorm
-$ uv run --python 3.13 --with "mannetroll-cupystorm==0.1.2" turbulence
+$ uv run --python 3.13 --with "mannetroll-cupystorm==0.1.3" turbulence
 ```
 
 ## one-liner GPU/CuPy
 
 ```
-$ uv run --python 3.13 --with "mannetroll-cupystorm[cuda]==0.1.2" turbulence
+$ uv run --python 3.13 --with "mannetroll-cupystorm[cuda]==0.1.3" turbulence
 ```
 
 ### DNS solver
@@ -89,19 +89,19 @@ From the project root:
 ## High-k spectral forcing + Ekman/Rayleigh large-scale drag
 ### The flow remains fully turbulent after 1,000,000 iterations (256 x 256) CuPy
 
-![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wekman.png)
+![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.3/wekman.png)
 
 ## Rain (256 x 256) SciPy
 
-![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wrain.png)
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.3/wrain.png)
 
 ## Circle (256 x 256) SciPy
 
-![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wcircle.png)
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.3/wcircle.png)
 
 ## Mouse (256 x 256) SciPy
 
-![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/wmouse.png)
+![SciPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.3/wmouse.png)
 
 
 ### Full CLI
@@ -155,7 +155,7 @@ Or let the backend auto-detect:
 
 ## The DNS with CuPy (7776 x 7776) Navier-Stokes
 
-![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.2/window7776.png)
+![CuPy](https://raw.githubusercontent.com/mannetroll/cupystorm/v0.1.3/window7776.png)
 
 ## Profiling
 

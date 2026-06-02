@@ -70,14 +70,32 @@ Memory layouts (kept identical to the CUDA port — important when indexing):
 - `ur_full` (3/2-padded, physical): `(3, NZ_full, NX_full)` SoA — `[comp, z, x]`
 - `uc_full` (3/2-padded, spectral): `(3, NZ_full, NK_full)` SoA
 
-### Forcing Modes
+### Modes
 
-Controlled by `MODE` parameter or GUI buttons:
+Controlled by `MODE` parameter or GUI buttons. Selected in two places: the init
+dispatch in `create_dns_state` (which field to start from) and `_apply_mode_defaults`
+(which forcing knobs to set). Adding a mode means a branch in each, plus registering
+the name in the `Literal` hints, `main()` validation, and the GUI buttons/`MODE_RE`.
+
+Sustained-forcing modes (built via `force_omega_hat` / `highk_omega_hat` / `rayleigh_alpha_k`):
 - **`pao`**: PAO spectrum init, no sustained forcing (decaying turbulence)
 - **`highh`**: High-k spectral forcing + Ekman/Rayleigh drag (sustained turbulence)
 - **`rain`**: Random localized impulses at Hz=2.0, amp=0.25
-- **`circle`**: Tangential forcing on a ring
+- **`circle`**: Steady tangential forcing on a ring
 - **`mouse`**: Interactive click-drag forcing
+- **`kolmo`**: Steady Kolmogorov forcing `f_x = A·sin(kf·z)` (kf≈K0) + weak large-scale drag; starts from a smooth low-k random seed so the shear transitions to turbulence
+- **`jet`**: Steady localized momentum source (persistent +x push) → turbulent jet
+
+Initial-condition-only modes (analytic field via `_load_vorticity_field`, then free decay):
+- **`tg`**: Taylor–Green vortex array `ω = A·cos(kX)·cos(kZ)`
+- **`shear`**: Kelvin–Helmholtz — two opposite `sech²` shear layers + perturbation
+- **`merge`**: two like-sign Gaussian vortices that co-rotate and merge
+
+Body-force plumbing: `_update_force_omega_hat` builds a Gaussian blob into
+`force_u_full`/`force_w_full`; `_force_fields_to_omega_hat` is the FFT+curl tail that
+turns any custom real-space force field into `force_omega_hat` (used by `circle`/`kolmo`
+so their steady patterns are not overwritten by the blob builder). `next_dt` caps `dt`
+growth at 1.1×/step so forcing-from-rest modes don't blow up on the first adaptation.
 
 ### Backend Selection
 
