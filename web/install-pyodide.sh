@@ -39,4 +39,3 @@ mkdir -p "$DEST"
 cp -R "${SOURCE_DIR}/." "$DEST/"
 
 echo "Installed Pyodide ${VERSION} into ${DEST}"
-echo "Serve this directory and open /vortex/ or / from your configured web root."
