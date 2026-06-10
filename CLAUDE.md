@@ -19,7 +19,7 @@ uv run turbulence
 # Run CLI simulator directly (entry-point alias: `uv run sim ...`)
 uv run python -m cupystorm.turbo_simulator N Re K0 STEPS CFL BACKEND [MODE]
 # Example: uv run python -m cupystorm.turbo_simulator 256 10000 10 1000 0.75 cpu pao
-# All args positional & optional; BACKEND ∈ {cpu,gpu,auto}, MODE ∈ {pao,highh,rain,circle,mouse}
+# All args positional & optional; BACKEND ∈ {cpu,gpu,auto}, MODE ∈ {pao,highh,rain,circle,mouse,kolmo,tg,merge,bickley,vortices}
 
 # Build package
 python -m build
@@ -84,12 +84,12 @@ Sustained-forcing modes (built via `force_omega_hat` / `highk_omega_hat` / `rayl
 - **`circle`**: Steady tangential forcing on a ring
 - **`mouse`**: Interactive click-drag forcing
 - **`kolmo`**: Steady Kolmogorov forcing `f_x = A·sin(kf·z)` (kf≈K0) + weak large-scale drag; starts from a smooth low-k random seed so the shear transitions to turbulence
-- **`jet`**: Steady localized momentum source (persistent +x push) → turbulent jet
 
 Initial-condition-only modes (analytic field via `_load_vorticity_field`, then free decay):
 - **`tg`**: Taylor–Green vortex array `ω = A·cos(kX)·cos(kZ)`
-- **`shear`**: Kelvin–Helmholtz — two opposite `sech²` shear layers + perturbation
 - **`merge`**: two like-sign Gaussian vortices that co-rotate and merge
+- **`bickley`**: unstable Bickley jet that rolls up into a periodic row of vortices
+- **`vortices`**: random vortex gas that merges into decaying 2D turbulence
 
 Body-force plumbing: `_update_force_omega_hat` builds a Gaussian blob into
 `force_u_full`/`force_w_full`; `_force_fields_to_omega_hat` is the FFT+curl tail that

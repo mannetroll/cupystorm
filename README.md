@@ -116,7 +116,7 @@ Where:
 - STEPS    — number of time steps
 - CFL      — target CFL number
 - BACKEND  — "cpu", "gpu", or "auto"
-- MODE     — "pao" | "highh" | "rain" | "circle" | "mouse"
+- MODE     — "pao" | "highh" | "rain" | "circle" | "mouse" | "kolmo" | "tg" | "merge" | "bickley" | "vortices"
 
 Examples:
 
