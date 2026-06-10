@@ -1,0 +1,133 @@
+:root {
+  color-scheme: dark;
+  --bg: #15171a;
+  --panel: #1f2226;
+  --text: #d7dade;
+  --accent: #4f8cc9;
+  --border: #34383e;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  display: flex;
+  justify-content: center;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px;
+  gap: 6px;
+  max-width: 100vw;
+}
+
+/* --- loading --- */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 25vh 40px;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- app --- */
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.mode-row {
+  display: flex;
+  gap: 6px;
+}
+
+.mode-row .mode-btn {
+  flex: 1 1 0;
+}
+
+button, select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+button:hover, select:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: default; }
+
+.mode-btn.active {
+  font-weight: 700;
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.canvas-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+#view {
+  width: min(85vmin, 768px);
+  height: min(85vmin, 768px);
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  touch-action: none;
+}
+
+#view.mouse-mode { cursor: crosshair; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.controls button {
+  min-width: 34px;
+}
+
+.auto-reset {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  user-select: none;
+}
+
+.status {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #9aa0a6;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  text-align: center;
+  white-space: nowrap;
+  overflow-x: auto;
+}

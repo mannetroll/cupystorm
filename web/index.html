@@ -3,13 +3,93 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Storm - Mannetroll</title>
+  <title>2D Turbulence (Pyodide) &copy; Mannetroll</title>
   <link rel="stylesheet" href="styles.css">
   <script src="pyodide/pyodide.js"></script>
 </head>
 <body>
   <main class="app-shell">
-    ...
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <p id="loading-text">Loading Pyodide&hellip;</p>
+    </div>
+
+    <div id="app" hidden>
+      <div class="mode-row">
+        <button class="mode-btn" data-mode="pao" title="Initialize with PAO spectrum">Navier-Stokes</button>
+        <button class="mode-btn" data-mode="highh" title="High-k spectral forcing + Ekman/Rayleigh large-scale drag">High-k + Ekman/Rayleigh</button>
+        <button class="mode-btn" data-mode="rain" title="Initialize with random body force">Rain</button>
+        <button class="mode-btn" data-mode="circle" title="Initialize with circle stirring">Circle</button>
+        <button class="mode-btn" data-mode="mouse" title="Initialize with mouse force (drag on the image)">Mouse</button>
+      </div>
+      <div class="mode-row">
+        <button class="mode-btn" data-mode="kolmo" title="Steady sin(kf z) forcing + drag: 2D inverse energy cascade">Kolmogorov</button>
+        <button class="mode-btn" data-mode="tg" title="Taylor-Green vortex array (decaying benchmark)">Taylor-Green</button>
+        <button class="mode-btn" data-mode="merge" title="Two like-sign vortices that orbit and merge">Vortex Merger</button>
+        <button class="mode-btn" data-mode="bickley" title="Unstable jet that rolls up into a row of vortices">Bickley Jet</button>
+        <button class="mode-btn" data-mode="vortices" title="Random vortices merging into 2D turbulence">Vortex Gas</button>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="view" width="384" height="384"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="start-btn" title="Start simulation">&#9654;</button>
+        <button id="stop-btn" title="Stop simulation">&#9632;</button>
+        <button id="reset-btn" title="Reset simulation">&#8635;</button>
+        <button id="save-btn" title="Save current frame as PNG">&#128190;</button>
+
+        <select id="n-select" title="N: Grid Size (N)">
+          <option>128</option><option>192</option><option selected>256</option>
+          <option>384</option><option>512</option><option>768</option>
+        </select>
+        <select id="var-select" title="V: Variable">
+          <option value="0">U</option><option value="1">V</option>
+          <option value="2">K</option><option value="3" selected>&Omega;</option>
+          <option value="4">&phi;</option>
+        </select>
+        <select id="cmap-select" title="C: Colormaps">
+          <option>Gray</option><option>Inferno</option><option>Ocean</option>
+          <option>Viridis</option><option>Plasma</option><option selected>Magma</option>
+          <option>Turbo</option><option>Fire</option><option>Doom</option>
+          <option>Cividis</option><option>Jet</option><option>Coolwarm</option>
+          <option>RdBu</option>
+        </select>
+        <select id="re-select" title="R: Reynolds Number (Re)">
+          <option>10</option><option>100</option><option>1000</option><option>2000</option>
+          <option>4000</option><option>5000</option><option>8000</option>
+          <option selected>10000</option><option>18000</option><option>20000</option>
+          <option>25000</option><option>40000</option><option>100000</option>
+          <option>1E6</option><option>1E7</option><option>1E8</option><option>1E9</option>
+        </select>
+        <select id="k0-select" title="K: Initial energy peak wavenumber (K0)">
+          <option>2</option><option>3</option><option>4</option><option>5</option>
+          <option>6</option><option>7</option><option>8</option><option>9</option>
+          <option selected>10</option><option>15</option><option>20</option>
+          <option>25</option><option>35</option><option>50</option><option>90</option>
+        </select>
+        <select id="cfl-select" title="L: Controlling &Delta;t (CFL)">
+          <option>0.05</option><option>0.1</option><option>0.15</option><option>0.2</option>
+          <option>0.25</option><option>0.3</option><option>0.5</option>
+          <option selected>0.75</option><option>0.95</option>
+        </select>
+        <select id="update-select" title="U: Steps per drawn frame">
+          <option>1</option><option>2</option><option selected>5</option>
+          <option>10</option><option>20</option><option>50</option>
+        </select>
+        <select id="steps-select" title="S: Max steps before reset/stop">
+          <option>2000</option><option>5000</option><option>10000</option>
+          <option>25000</option><option>50000</option><option selected>1E5</option>
+          <option>3E5</option><option>1E6</option>
+        </select>
+        <label class="auto-reset" title="If checked, simulation auto-resets">
+          <input type="checkbox" id="auto-reset"> auto
+        </label>
+      </div>
+
+      <div class="status" id="status">&nbsp;</div>
+    </div>
   </main>
   <script type="module" src="app.js"></script>
 </body>
