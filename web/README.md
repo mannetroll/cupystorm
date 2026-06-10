@@ -25,6 +25,17 @@ python3 -m http.server 8000
 # open http://localhost:8000/
 ```
 
+## Deploy
+
+```bash
+./deploy.sh user@host:/var/drtobbe/storm
+```
+
+Copies the app plus a minimal Pyodide subset (core runtime + numpy/scipy
+wheels, ~30 MB) — the full `pyodide/` distribution is ~460 MB and not needed
+at runtime. The server must serve `.wasm` as `application/wasm` (default in
+current nginx/apache).
+
 ## Files
 
 - `index.html` / `styles.css` / `app.js` — front-end; `app.js` boots Pyodide,
