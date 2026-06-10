@@ -131,7 +131,9 @@ button:disabled { opacity: 0.4; cursor: default; }
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 10px;
-  text-align: center;
-  white-space: nowrap;
-  overflow-x: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px 14px;
 }
+
+.status span { white-space: nowrap; }

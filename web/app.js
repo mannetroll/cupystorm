@@ -169,15 +169,17 @@ function updateStatusLine(st) {
   const steps = st.iter - simStartIter;
   const fps = elapsed > 0 && steps > 0 ? (steps / elapsed).toFixed(2) : "N/A";
   const pal = st.pal != null ? (10000 * st.pal).toFixed(1) : "N/A";
-  const now = new Date();
-  const stamp =
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-` +
-    `${String(now.getDate()).padStart(2, "0")} ` +
-    `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-  statusEl.textContent =
-    `FPS: ${fps} | pal/Zkmax²: ${pal} | σ: ${Math.trunc(st.sig)} | ` +
-    `Iter: ${st.iter} | T: ${st.t.toFixed(3)} | dt: ${st.dt.toFixed(6)} | ` +
-    `${(elapsed / 60).toFixed(1)} min | Visc: ${st.visc.toPrecision(6)} | ${stamp}`;
+  const cells = [
+    `FPS: ${fps}`,
+    `pal/Zkmax²: ${pal}`,
+    `σ: ${Math.trunc(st.sig)}`,
+    `Iter: ${st.iter}`,
+    `T: ${st.t.toFixed(3)}`,
+    `dt: ${st.dt.toFixed(6)}`,
+    `${(elapsed / 60).toFixed(1)} min`,
+    `Visc: ${st.visc.toPrecision(6)}`,
+  ];
+  statusEl.innerHTML = cells.map((c) => `<span>${c}</span>`).join("");
 }
 
 // ----------------------------------------------------------------------
