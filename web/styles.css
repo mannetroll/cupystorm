@@ -9,6 +9,9 @@
 
 * { box-sizing: border-box; }
 
+/* #app/.loading set display:flex, which would beat the UA's [hidden] rule */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
   background: var(--bg);
@@ -89,8 +92,9 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 
 #view {
-  width: min(85vmin, 768px);
-  height: min(85vmin, 768px);
+  /* leave room for the button rows, controls and status bar */
+  width: min(85vmin, 70vh, 768px);
+  height: min(85vmin, 70vh, 768px);
   image-rendering: pixelated;
   border: 1px solid var(--border);
   border-radius: 4px;

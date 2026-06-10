@@ -161,7 +161,8 @@ CMAP_NAMES = list(COLOR_MAPS.keys())
 class WebSim:
     """Browser-facing wrapper: one instance is driven from app.js."""
 
-    def __init__(self, n: int = 256, mode: str = "pao"):
+    def __init__(self, n: int = 256, mode: str = "pao",
+                 re: float | None = None, k0: float = 10.0, cfl: float = 0.75):
         self.mode = mode if mode in VALID_MODES else "pao"
         self.cmap_name = DEFAULT_CMAP_NAME
         self.sig = 20.0
@@ -173,9 +174,9 @@ class WebSim:
 
         self.sim = DnsSimulator(
             n=int(n),
-            re=float(MODE_RE[self.mode]),
-            k0=10.0,
-            cfl=0.75,
+            re=float(re) if re is not None else float(MODE_RE[self.mode]),
+            k0=float(k0),
+            cfl=float(cfl),
             backend="cpu",
             mode=self.mode,
         )

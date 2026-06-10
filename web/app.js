@@ -57,8 +57,22 @@ async function boot() {
 
   loadingText.textContent = "Initializing DNS state…";
   await nextPaint();
+  // Read all initial parameters from the form controls: browsers restore
+  // previous form state on reload without firing change events, so the
+  // selects are the source of truth.
   const websim = pyodide.pyimport("web_sim");
-  sim = websim.WebSim(parseInt($("n-select").value, 10), currentMode);
+  sim = websim.WebSim(
+    parseInt($("n-select").value, 10),
+    currentMode,
+    parseFloat($("re-select").value),
+    parseFloat($("k0-select").value),
+    parseFloat($("cfl-select").value)
+  );
+  sim.set_variable(parseInt($("var-select").value, 10));
+  sim.set_cmap($("cmap-select").value);
+  updateSteps = parseInt($("update-select").value, 10);
+  maxSteps = parseFloat($("steps-select").value);
+  autoReset = $("auto-reset").checked;
 
   wireUi();
   setActiveModeButton(currentMode);
