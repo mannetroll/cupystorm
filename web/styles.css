@@ -5,6 +5,8 @@
   --text: #d7dade;
   --accent: #4f8cc9;
   --border: #34383e;
+  /* canvas size; also clamps the width of every control/status row */
+  --view-size: min(85vmin, 70vh, 768px);
 }
 
 * { box-sizing: border-box; }
@@ -56,6 +58,8 @@ body {
   flex-direction: column;
   gap: 6px;
   align-items: stretch;
+  width: var(--view-size);
+  max-width: 100%;
 }
 
 .mode-row {
@@ -65,6 +69,7 @@ body {
 
 .mode-row .mode-btn {
   flex: 1 1 0;
+  min-width: 0;
 }
 
 button, select {
@@ -72,8 +77,8 @@ button, select {
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 13px;
+  padding: 3px 4px;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -93,8 +98,8 @@ button:disabled { opacity: 0.4; cursor: default; }
 
 #view {
   /* leave room for the button rows, controls and status bar */
-  width: min(85vmin, 70vh, 768px);
-  height: min(85vmin, 70vh, 768px);
+  width: var(--view-size);
+  height: var(--view-size);
   image-rendering: pixelated;
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -112,7 +117,7 @@ button:disabled { opacity: 0.4; cursor: default; }
 }
 
 .controls button {
-  min-width: 34px;
+  min-width: 26px;
 }
 
 .auto-reset {
@@ -130,10 +135,40 @@ button:disabled { opacity: 0.4; cursor: default; }
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 6px 10px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 3px 14px;
+  padding: 4px 8px;
+  /* wrapping flex: never forces the layout wider than the canvas */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 10px;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .status span { white-space: nowrap; }
+
+/* --- narrow screens (iPhone portrait) --- */
+@media (max-width: 480px) {
+  .app-shell { padding: 8px 4px; }
+
+  button, select {
+    font-size: 11px;
+    padding: 3px 4px;
+  }
+
+  .mode-row { gap: 4px; }
+
+  .mode-row .mode-btn {
+    white-space: normal;     /* let long labels wrap to two lines */
+    line-height: 1.2;
+    padding: 3px 2px;
+  }
+
+  .controls { gap: 4px; }
+
+  .status {
+    font-size: 11px;
+    padding: 3px 6px;
+    gap: 1px 6px;
+  }
+}

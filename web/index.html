@@ -17,7 +17,7 @@
     <div id="app" hidden>
       <div class="mode-row">
         <button class="mode-btn" data-mode="pao" title="Initialize with PAO spectrum">Navier-Stokes</button>
-        <button class="mode-btn" data-mode="highh" title="High-k spectral forcing + Ekman/Rayleigh large-scale drag">High-k + Ekmanan</button>
+        <button class="mode-btn" data-mode="highh" title="High-k spectral forcing + Ekman/Rayleigh large-scale drag">High-k</button>
         <button class="mode-btn" data-mode="rain" title="Initialize with random body force">Rain</button>
         <button class="mode-btn" data-mode="circle" title="Initialize with circle stirring">Circle</button>
         <button class="mode-btn" data-mode="mouse" title="Initialize with mouse force (drag on the image)">Mouse</button>
@@ -70,8 +70,8 @@
           <option>25</option><option>35</option><option>50</option><option>90</option>
         </select>
         <select id="cfl-select" title="L: Controlling &Delta;t (CFL)">
-          <option>0.05</option><option>0.1</option><option>0.15</option><option>0.2</option>
-          <option>0.25</option><option>0.3</option><option>0.5</option>
+          <option>0.05</option><option>0.1</option><option>0.2</option>
+          <option>0.3</option><option>0.4</option><option>0.5</option>
           <option selected>0.75</option><option>0.95</option>
         </select>
         <select id="update-select" title="U: Steps per drawn frame">
