@@ -57,11 +57,26 @@ MODE_RE = {
     "rain": 10000,
     "circle": 5000,
     "mouse": 10000,
-    "kolmo": 20000,
+    "kolmo": 500,
     "tg": 10000,
     "merge": 25000,
-    "bickley": 8000,
+    "bickley": 1000,
     "vortices": 4000,
+}
+
+# Per-mode default CFL: the sustained-forcing modes run fine at 0.75; the
+# initial-condition-only modes need 0.3 to stay accurate through the decay.
+MODE_CFL = {
+    "pao": 0.75,
+    "highh": 0.75,
+    "rain": 0.75,
+    "circle": 0.75,
+    "mouse": 0.75,
+    "kolmo": 0.3,
+    "tg": 0.3,
+    "merge": 0.3,
+    "bickley": 0.1,
+    "vortices": 0.3,
 }
 
 VALID_MODES = tuple(MODE_RE.keys())
@@ -226,6 +241,9 @@ class WebSim:
         re = MODE_RE.get(mode)
         if re is not None:
             self.sim.re = float(re)
+        cfl = MODE_CFL.get(mode)
+        if cfl is not None:
+            self.sim.cfl = float(cfl)
         self.reset(mode)
 
     def set_n(self, n: int):

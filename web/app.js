@@ -9,7 +9,14 @@ const PY_PACKAGE_FILES = ["__init__.py", "turbo_simulator.py", "turbo_wrapper.py
 // applies it on the Python side — this copy only syncs the Re selector).
 const MODE_RE = {
   pao: 10000, highh: 10000, rain: 10000, circle: 5000, mouse: 10000,
-  kolmo: 20000, tg: 10000, merge: 25000, bickley: 8000, vortices: 4000,
+  kolmo: 500, tg: 10000, merge: 25000, bickley: 1000, vortices: 4000,
+};
+
+// Per-mode CFL (mirrors MODE_CFL in web_sim.py — applied on the Python
+// side; this copy only syncs the CFL selector).
+const MODE_CFL = {
+  pao: 0.75, highh: 0.75, rain: 0.75, circle: 0.75, mouse: 0.75,
+  kolmo: 0.3, tg: 0.3, merge: 0.3, bickley: 0.1, vortices: 0.3,
 };
 
 const STEP_BUDGET_MS = 45; // max solver time per animation frame
@@ -216,12 +223,24 @@ function syncReSelect(mode) {
   sel.value = txt;
 }
 
+function syncCflSelect(mode) {
+  const cfl = MODE_CFL[mode];
+  if (cfl == null) return;
+  const sel = $("cfl-select");
+  const txt = String(cfl);
+  if (![...sel.options].some((o) => o.value === txt)) {
+    sel.add(new Option(txt, txt));
+  }
+  sel.value = txt;
+}
+
 function wireUi() {
   document.querySelectorAll(".mode-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentMode = btn.dataset.mode;
       setActiveModeButton(currentMode);
       syncReSelect(currentMode);
+      syncCflSelect(currentMode);
       reinit(() => sim.set_mode(currentMode));
     });
   });
