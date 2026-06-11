@@ -9,14 +9,14 @@ const PY_PACKAGE_FILES = ["__init__.py", "turbo_simulator.py", "turbo_wrapper.py
 // applies it on the Python side — this copy only syncs the Re selector).
 const MODE_RE = {
   pao: 10000, highh: 10000, rain: 10000, circle: 5000, mouse: 10000,
-  kolmo: 500, tg: 10000, merge: 25000, bickley: 1000, vortices: 4000,
+  kolmo: 1000, tg: 10000, merge: 25000, bickley: 1000, vortices: 4000,
 };
 
 // Per-mode CFL (mirrors MODE_CFL in web_sim.py — applied on the Python
 // side; this copy only syncs the CFL selector).
 const MODE_CFL = {
   pao: 0.75, highh: 0.75, rain: 0.75, circle: 0.75, mouse: 0.75,
-  kolmo: 0.3, tg: 0.3, merge: 0.3, bickley: 0.1, vortices: 0.3,
+  kolmo: 0.5, tg: 0.5, merge: 0.5, bickley: 0.5, vortices: 0.5,
 };
 
 const STEP_BUDGET_MS = 45; // max solver time per animation frame
@@ -54,12 +54,14 @@ async function boot() {
   await pyodide.loadPackage(["numpy", "scipy"]);
 
   loadingText.textContent = "Mounting solver sources…";
+  // no-store: a stale cached web_sim.py silently changes the per-mode
+  // defaults (MODE_RE/MODE_CFL) behind a fresh UI — always refetch.
   pyodide.FS.mkdirTree("/home/pyodide/cupystorm");
   for (const name of PY_PACKAGE_FILES) {
-    const text = await (await fetch(`py/cupystorm/${name}`)).text();
+    const text = await (await fetch(`py/cupystorm/${name}`, { cache: "no-store" })).text();
     pyodide.FS.writeFile(`/home/pyodide/cupystorm/${name}`, text);
   }
-  const glue = await (await fetch("web_sim.py")).text();
+  const glue = await (await fetch("web_sim.py", { cache: "no-store" })).text();
   pyodide.FS.writeFile("/home/pyodide/web_sim.py", glue);
 
   loadingText.textContent = "Initializing DNS state…";

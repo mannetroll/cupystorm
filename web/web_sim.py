@@ -57,7 +57,7 @@ MODE_RE = {
     "rain": 10000,
     "circle": 5000,
     "mouse": 10000,
-    "kolmo": 500,
+    "kolmo": 1000,
     "tg": 10000,
     "merge": 25000,
     "bickley": 1000,
@@ -72,11 +72,11 @@ MODE_CFL = {
     "rain": 0.75,
     "circle": 0.75,
     "mouse": 0.75,
-    "kolmo": 0.3,
-    "tg": 0.3,
-    "merge": 0.3,
-    "bickley": 0.1,
-    "vortices": 0.3,
+    "kolmo": 0.5,
+    "tg": 0.5,
+    "merge": 0.5,
+    "bickley": 0.5,
+    "vortices": 0.5,
 }
 
 VALID_MODES = tuple(MODE_RE.keys())
