@@ -60,8 +60,8 @@ MODE_RE = {
     "kolmo": 1000,
     "tg": 10000,
     "merge": 25000,
-    "bickley": 1000,
-    "vortices": 4000,
+    "bickley": 50000,
+    "vortices": 10000,
 }
 
 # Per-mode default CFL: the sustained-forcing modes run fine at 0.75; the
@@ -76,7 +76,7 @@ MODE_CFL = {
     "tg": 0.5,
     "merge": 0.5,
     "bickley": 0.5,
-    "vortices": 0.5,
+    "vortices": 0.3,
 }
 
 VALID_MODES = tuple(MODE_RE.keys())
