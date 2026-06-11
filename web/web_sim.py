@@ -60,7 +60,7 @@ MODE_RE = {
     "kolmo": 1000,
     "tg": 10000,
     "merge": 25000,
-    "bickley": 50000,
+    "bickley": 10000,
     "vortices": 10000,
 }
 
@@ -75,7 +75,7 @@ MODE_CFL = {
     "kolmo": 0.5,
     "tg": 0.5,
     "merge": 0.5,
-    "bickley": 0.5,
+    "bickley": 0.3,
     "vortices": 0.3,
 }
 
