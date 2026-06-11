@@ -59,7 +59,7 @@ MODE_RE = {
     "mouse": 10000,
     "kolmo": 1000,
     "tg": 10000,
-    "merge": 25000,
+    "merge": 10000,
     "bickley": 10000,
     "vortices": 10000,
 }
@@ -74,7 +74,7 @@ MODE_CFL = {
     "mouse": 0.75,
     "kolmo": 0.5,
     "tg": 0.5,
-    "merge": 0.5,
+    "merge": 0.3,
     "bickley": 0.3,
     "vortices": 0.3,
 }
